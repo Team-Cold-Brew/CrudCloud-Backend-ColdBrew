@@ -1,0 +1,68 @@
+package com.riwi.CrudCloud.auth.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import com.riwi.CrudCloud.auth.model.User;
+import com.riwi.CrudCloud.auth.model.UserType;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Integer> {
+
+    /**
+     * Find user by email
+     *
+     * @param email the user's email
+     * @return Optional containing the user if found
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
+     * Find user by username
+     *
+     * @param username the user's username
+     * @return Optional containing the user if found
+     */
+    Optional<User> findByUsername(String username);
+
+    /**
+     * Find all active users of a specific type
+     *
+     * @param userType the type of user (INDIVIDUAL or ORGANIZATIONAL_USER)
+     * @return List of active users of the specified type
+     */
+    @Query("SELECT u FROM User u WHERE u.userType = :userType AND u.deletedAt IS NULL")
+    List<User> findActiveUsersByType(@Param("userType") UserType userType);
+
+    /**
+     * Find all users with a specific personal plan (for individuals)
+     *
+     * @param planId the plan ID
+     * @return List of users assigned to this plan
+     */
+    @Query("SELECT u FROM User u WHERE u.personalPlan.planId = :planId AND u.deletedAt IS NULL")
+    List<User> findUsersByPersonalPlanId(@Param("planId") Integer planId);
+
+    /**
+     * Check if email already exists (useful for registration validation)
+     *
+     * @param email the email to check
+     * @return true if email exists and not deleted
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
+    boolean existsByEmailAndNotDeleted(@Param("email") String email);
+
+    /**
+     * Check if username already exists
+     *
+     * @param username the username to check
+     * @return true if username exists and not deleted
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.username = :username AND u.deletedAt IS NULL")
+    boolean existsByUsernameAndNotDeleted(@Param("username") String username);
+}

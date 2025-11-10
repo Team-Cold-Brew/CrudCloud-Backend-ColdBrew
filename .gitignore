@@ -31,3 +31,13 @@ build/
 
 ### VS Code ###
 .vscode/
+.github/instructions/_INDEX.md
+.github/instructions/01-ARCHITECTURE-OVERVIEW.md
+.github/instructions/02-MODULE-COMMUNICATION.md
+.github/instructions/03-EXCEPTION-HANDLING.md
+.github/instructions/04-DTO-AND-VALIDATION.md
+.github/instructions/05-API-ENDPOINTS.md
+.github/instructions/06-TESTING.md
+.github/instructions/07-SECURITY.md
+.github/instructions/08-CODE-QUALITY.md
+.github/instructions/09-PHASE-2-PREPARATION.md
