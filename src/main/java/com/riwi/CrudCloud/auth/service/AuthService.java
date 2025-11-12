@@ -8,12 +8,12 @@ import com.riwi.CrudCloud.auth.dto.request.LoginRequest;
 import com.riwi.CrudCloud.auth.dto.request.RegisterRequest;
 import com.riwi.CrudCloud.auth.dto.response.AuthResponse;
 import com.riwi.CrudCloud.auth.dto.response.UserResponse;
-import com.riwi.CrudCloud.auth.exception.ConflictException;
-import com.riwi.CrudCloud.auth.exception.ResourceNotFoundException;
-import com.riwi.CrudCloud.auth.exception.UnauthorizedException;
 import com.riwi.CrudCloud.auth.model.User;
 import com.riwi.CrudCloud.auth.model.UserStatus;
 import com.riwi.CrudCloud.auth.repository.UserRepository;
+import com.riwi.CrudCloud.auth.util.exception.classes.ConflictException;
+import com.riwi.CrudCloud.auth.util.exception.classes.ResourceNotFoundException;
+import com.riwi.CrudCloud.auth.util.exception.classes.UnauthorizedException;
 
 /**
  * Service class for user authentication and user management
