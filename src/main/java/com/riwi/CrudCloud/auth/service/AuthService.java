@@ -8,9 +8,9 @@ import com.riwi.CrudCloud.auth.dto.request.LoginRequest;
 import com.riwi.CrudCloud.auth.dto.request.RegisterRequest;
 import com.riwi.CrudCloud.auth.dto.response.AuthResponse;
 import com.riwi.CrudCloud.auth.dto.response.UserResponse;
-import com.riwi.CrudCloud.auth.exception.InvalidCredentialsException;
-import com.riwi.CrudCloud.auth.exception.UserAlreadyExistsException;
-import com.riwi.CrudCloud.auth.exception.UserNotFoundException;
+import com.riwi.CrudCloud.auth.exception.ConflictException;
+import com.riwi.CrudCloud.auth.exception.ResourceNotFoundException;
+import com.riwi.CrudCloud.auth.exception.UnauthorizedException;
 import com.riwi.CrudCloud.auth.model.User;
 import com.riwi.CrudCloud.auth.model.UserStatus;
 import com.riwi.CrudCloud.auth.repository.UserRepository;
@@ -29,18 +29,18 @@ public class AuthService {
      *
      * @param registerRequest the registration request
      * @return AuthResponse with token and user details
-     * @throws UserAlreadyExistsException if email or username already exists
+     * @throws ConflictException if email or username already exists
      */
     @Transactional
     public AuthResponse register(RegisterRequest registerRequest) {
         // Check if email already exists
         if (userRepository.existsByEmailAndNotDeleted(registerRequest.getEmail())) {
-            throw new UserAlreadyExistsException("Email", registerRequest.getEmail());
+            throw new ConflictException("Email already exists: " + registerRequest.getEmail());
         }
 
         // Check if username already exists
         if (userRepository.existsByUsernameAndNotDeleted(registerRequest.getUsername())) {
-            throw new UserAlreadyExistsException("Username", registerRequest.getUsername());
+            throw new ConflictException("Username already exists: " + registerRequest.getUsername());
         }
 
         // Create new user
@@ -66,17 +66,17 @@ public class AuthService {
      *
      * @param loginRequest the login request
      * @return AuthResponse with token and user details
-     * @throws UserNotFoundException if user not found
-     * @throws InvalidCredentialsException if password is invalid
+     * @throws ResourceNotFoundException if user not found (404)
+     * @throws UnauthorizedException if password is invalid (401)
      */
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
-            .orElseThrow(() -> new UserNotFoundException("email", loginRequest.getEmail()));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + loginRequest.getEmail()));
 
         // TODO: Verify password with BCrypt
         if (!user.getPassword().equals(loginRequest.getPassword())) {
-            throw new InvalidCredentialsException();
+            throw new UnauthorizedException("Invalid email or password");
         }
 
         // TODO: Generate JWT token
@@ -91,12 +91,12 @@ public class AuthService {
      *
      * @param userId the user ID
      * @return UserResponse
-     * @throws UserNotFoundException if user not found
+     * @throws ResourceNotFoundException if user not found
      */
     @Transactional(readOnly = true)
     public UserResponse getUserProfile(Integer userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UserNotFoundException(userId));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
         return mapToUserResponse(user);
     }
