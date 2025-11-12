@@ -2,11 +2,11 @@ package com.riwi.CrudCloud.auth.config;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
-import com.riwi.CrudCloud.auth.exception.handlers.AuthenticationExceptionHandler;
-import com.riwi.CrudCloud.auth.exception.handlers.BusinessLogicExceptionHandler;
-import com.riwi.CrudCloud.auth.exception.handlers.ResourceExceptionHandler;
-import com.riwi.CrudCloud.auth.exception.handlers.SystemExceptionHandler;
-import com.riwi.CrudCloud.auth.exception.handlers.ValidationExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.AuthenticationExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.BusinessLogicExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.ResourceExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.SystemExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.ValidationExceptionHandler;
 
 /**
  * Global exception handler orchestrator for the auth module.
