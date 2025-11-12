@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.riwi.CrudCloud.auth.dto.response.PlanResponse;
-import com.riwi.CrudCloud.auth.exception.AuthException;
+import com.riwi.CrudCloud.auth.exception.ResourceNotFoundException;
 import com.riwi.CrudCloud.auth.model.Plan;
 import com.riwi.CrudCloud.auth.repository.PlanRepository;
 
@@ -39,12 +39,12 @@ public class PlanService {
      *
      * @param planId the plan ID
      * @return PlanResponse
-     * @throws AuthException if plan not found
+     * @throws ResourceNotFoundException if plan not found
      */
     @Transactional(readOnly = true)
     public PlanResponse getPlanById(Integer planId) {
         Plan plan = planRepository.findById(planId)
-            .orElseThrow(() -> new AuthException("Plan not found with ID: " + planId, "PLAN_NOT_FOUND"));
+            .orElseThrow(() -> new ResourceNotFoundException("Plan not found with ID: " + planId));
 
         return mapToPlanResponse(plan);
     }
@@ -54,12 +54,12 @@ public class PlanService {
      *
      * @param name the plan name
      * @return PlanResponse
-     * @throws AuthException if plan not found
+     * @throws ResourceNotFoundException if plan not found
      */
     @Transactional(readOnly = true)
     public PlanResponse getPlanByName(String name) {
         Plan plan = planRepository.findByName(name)
-            .orElseThrow(() -> new AuthException("Plan not found with name: " + name, "PLAN_NOT_FOUND"));
+            .orElseThrow(() -> new ResourceNotFoundException("Plan not found with name: " + name));
 
         return mapToPlanResponse(plan);
     }
