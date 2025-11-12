@@ -1,130 +1,53 @@
 package com.riwi.CrudCloud.auth.config;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
 
-import com.riwi.CrudCloud.auth.exception.AuthException;
-import com.riwi.CrudCloud.auth.exception.InvalidCredentialsException;
-import com.riwi.CrudCloud.auth.exception.UserAlreadyExistsException;
-import com.riwi.CrudCloud.auth.exception.UserNotFoundException;
+import com.riwi.CrudCloud.auth.exception.handlers.AuthenticationExceptionHandler;
+import com.riwi.CrudCloud.auth.exception.handlers.BusinessLogicExceptionHandler;
+import com.riwi.CrudCloud.auth.exception.handlers.ResourceExceptionHandler;
+import com.riwi.CrudCloud.auth.exception.handlers.SystemExceptionHandler;
+import com.riwi.CrudCloud.auth.exception.handlers.ValidationExceptionHandler;
 
 /**
- * Global exception handler for auth module
+ * Global exception handler orchestrator for the auth module.
+ * 
+ * Acts as the central registration point for all specialized exception handlers.
+ * Each handler manages a specific category of exceptions with appropriate HTTP status codes.
+ * 
+ * Architecture Overview:
+ * ┌─────────────────────────────────────┐
+ * │  GlobalExceptionHandler (Orchestrator)│
+ * │      (@ControllerAdvice)            │
+ * └─────────────────────────────────────┘
+ *              │
+ *    ┌─────────┼─────────┬──────────┬──────────┐
+ *    ▼         ▼         ▼          ▼          ▼
+ * Validation  Resource  Auth      Business  System
+ * (400)       (404)     (403)     (409,422)  (500)
+ * 
+ * Handler Categories:
+ * - ValidationExceptionHandler: HTTP 400 Bad Request
+ * - ResourceExceptionHandler: HTTP 404 Not Found
+ * - AuthenticationExceptionHandler: HTTP 403 Forbidden
+ * - BusinessLogicExceptionHandler: HTTP 409 Conflict & 422 Unprocessable Entity
+ * - SystemExceptionHandler: HTTP 500 Internal Server Error
+ * 
+ * Benefits:
+ * ✅ Separation of Concerns: Each handler manages one category
+ * ✅ Maintainability: Easy to locate and modify specific exception handling
+ * ✅ Scalability: New handlers can be added without modifying existing code
+ * ✅ Single Responsibility: Each handler focuses on one task
+ * ✅ Reusability: Handler patterns can be copied for new exceptions
  */
-@ControllerAdvice
+@ControllerAdvice(
+    basePackageClasses = {
+        ValidationExceptionHandler.class,
+        ResourceExceptionHandler.class,
+        AuthenticationExceptionHandler.class,
+        BusinessLogicExceptionHandler.class,
+        SystemExceptionHandler.class
+    }
+)
 public class GlobalExceptionHandler {
-
-    /**
-     * Handle validation errors
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
-            MethodArgumentNotValidException ex,
-            WebRequest request) {
-        
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", "VALIDATION_ERROR");
-        response.put("message", "Validation failed");
-        response.put("details", errors);
-        response.put("timestamp", LocalDateTime.now());
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Handle UserNotFoundException
-     */
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleUserNotFoundException(
-            UserNotFoundException ex,
-            WebRequest request) {
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", "USER_NOT_FOUND");
-        response.put("message", ex.getMessage());
-        response.put("timestamp", LocalDateTime.now());
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    /**
-     * Handle UserAlreadyExistsException
-     */
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<Map<String, Object>> handleUserAlreadyExistsException(
-            UserAlreadyExistsException ex,
-            WebRequest request) {
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", "USER_ALREADY_EXISTS");
-        response.put("message", ex.getMessage());
-        response.put("timestamp", LocalDateTime.now());
-
-        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
-    }
-
-    /**
-     * Handle InvalidCredentialsException
-     */
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidCredentialsException(
-            InvalidCredentialsException ex,
-            WebRequest request) {
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", "INVALID_CREDENTIALS");
-        response.put("message", ex.getMessage());
-        response.put("timestamp", LocalDateTime.now());
-
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-    }
-
-    /**
-     * Handle general AuthException
-     */
-    @ExceptionHandler(AuthException.class)
-    public ResponseEntity<Map<String, Object>> handleAuthException(
-            AuthException ex,
-            WebRequest request) {
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", ex.getCode());
-        response.put("message", ex.getMessage());
-        response.put("timestamp", LocalDateTime.now());
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Handle generic exceptions
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGlobalException(
-            Exception ex,
-            WebRequest request) {
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", "INTERNAL_SERVER_ERROR");
-        response.put("message", "An unexpected error occurred");
-        response.put("details", ex.getMessage());
-        response.put("timestamp", LocalDateTime.now());
-
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    // Orchestrator - delegates to specialized handlers
 }
