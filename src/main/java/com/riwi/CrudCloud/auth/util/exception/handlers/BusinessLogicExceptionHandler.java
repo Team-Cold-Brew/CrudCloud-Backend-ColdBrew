@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.exception.handlers;
+package com.riwi.CrudCloud.auth.util.exception.handlers;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.riwi.CrudCloud.auth.exception.ConflictException;
-import com.riwi.CrudCloud.auth.exception.UnprocessableEntityException;
-import com.riwi.CrudCloud.auth.exception.dto.ErrorResponse;
+import com.riwi.CrudCloud.auth.util.exception.classes.ConflictException;
+import com.riwi.CrudCloud.auth.util.exception.classes.UnprocessableEntityException;
+import com.riwi.CrudCloud.auth.util.exception.dto.ErrorResponse;
 
 /**
  * Handles business logic errors for HTTP 409 Conflict and HTTP 422 Unprocessable Entity responses.

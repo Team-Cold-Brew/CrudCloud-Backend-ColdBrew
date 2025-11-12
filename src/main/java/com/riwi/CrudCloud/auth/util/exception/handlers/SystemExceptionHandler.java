@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.exception.handlers;
+package com.riwi.CrudCloud.auth.util.exception.handlers;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.riwi.CrudCloud.auth.exception.DatabaseException;
-import com.riwi.CrudCloud.auth.exception.dto.ErrorResponse;
+import com.riwi.CrudCloud.auth.util.exception.classes.DatabaseException;
+import com.riwi.CrudCloud.auth.util.exception.dto.ErrorResponse;
 
 /**
  * Handles system-level errors for HTTP 500 Internal Server Error responses.

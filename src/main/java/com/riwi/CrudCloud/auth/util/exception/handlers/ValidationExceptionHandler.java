@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.exception.handlers;
+package com.riwi.CrudCloud.auth.util.exception.handlers;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.riwi.CrudCloud.auth.exception.BadRequestException;
-import com.riwi.CrudCloud.auth.exception.dto.ErrorResponse;
+import com.riwi.CrudCloud.auth.util.exception.classes.BadRequestException;
+import com.riwi.CrudCloud.auth.util.exception.dto.ErrorResponse;
 
 /**
  * Handles validation errors for HTTP 400 Bad Request responses.
