@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.exception.dto;
+package com.riwi.CrudCloud.auth.util.exception.dto;
 
 import java.time.LocalDateTime;
 import java.util.Map;
