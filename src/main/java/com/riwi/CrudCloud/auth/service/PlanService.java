@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.riwi.CrudCloud.auth.dto.response.PlanResponse;
-import com.riwi.CrudCloud.auth.exception.ResourceNotFoundException;
 import com.riwi.CrudCloud.auth.model.Plan;
 import com.riwi.CrudCloud.auth.repository.PlanRepository;
+import com.riwi.CrudCloud.auth.util.exception.classes.ResourceNotFoundException;
 
 /**
  * Service class for plan management
