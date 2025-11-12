@@ -48,23 +48,37 @@ All custom exceptions extend `RuntimeException`, making them unchecked exception
 
 ```
 auth/
-├── exception/
-│   ├── BadRequestException.java
-│   ├── ConflictException.java
-│   ├── DatabaseException.java
-│   ├── ForbiddenException.java
-│   ├── ResourceNotFoundException.java
-│   ├── UnauthorizedException.java
-│   ├── UnprocessableEntityException.java
-│   ├── handlers/
-│   │   ├── ValidationExceptionHandler.java
-│   │   ├── AuthenticationExceptionHandler.java
-│   │   ├── ResourceExceptionHandler.java
-│   │   ├── BusinessLogicExceptionHandler.java
-│   │   └── SystemExceptionHandler.java
-│   ├── GlobalExceptionHandler.java
-│   └── dto/
-│       └── ErrorResponse.java
+├── config/
+├── controller/
+├── dto/
+├── model/
+├── repository/
+├── service/
+│   ├── AuthService.java
+│   └── PlanService.java
+└── util/
+    └── exception/
+        ├── GlobalExceptionHandler.java
+        ├── classes/
+        │   ├── AuthException.java
+        │   ├── BadRequestException.java
+        │   ├── ConflictException.java
+        │   ├── DatabaseException.java
+        │   ├── ForbiddenException.java
+        │   ├── InvalidCredentialsException.java (deprecated)
+        │   ├── ResourceNotFoundException.java
+        │   ├── UnauthorizedException.java
+        │   ├── UnprocessableEntityException.java
+        │   ├── UserAlreadyExistsException.java (deprecated)
+        │   └── UserNotFoundException.java (deprecated)
+        ├── handlers/
+        │   ├── AuthenticationExceptionHandler.java
+        │   ├── BusinessLogicExceptionHandler.java
+        │   ├── ResourceExceptionHandler.java
+        │   ├── SystemExceptionHandler.java
+        │   └── ValidationExceptionHandler.java
+        └── dto/
+            └── ErrorResponse.java
 ```
 
 ---
@@ -446,7 +460,7 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 
 ### GlobalExceptionHandler (Orchestrator)
 
-Located in `auth/config/GlobalExceptionHandler.java`:
+Located in `auth/util/exception/GlobalExceptionHandler.java`:
 
 ```java
 @ControllerAdvice(basePackageClasses = {
@@ -1014,5 +1028,6 @@ By following this architecture, the application ensures robust error handling th
 ---
 
 **Last Updated:** November 12, 2025  
-**Version:** 2.0  
-**Aligned With:** EXCEPTION_HANDLING_IMPLEMENTATION.md
+**Version:** 2.1  
+**Aligned With:** EXCEPTION_HANDLING_IMPLEMENTATION.md  
+**Status:** Refactored - Exception package moved to `auth/util/exception/` with organized subdirectories
