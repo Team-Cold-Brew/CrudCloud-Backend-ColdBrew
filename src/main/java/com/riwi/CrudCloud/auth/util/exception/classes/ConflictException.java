@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.exception;
+package com.riwi.CrudCloud.auth.util.exception.classes;
 
 /**
  * Exception thrown when a request conflicts with the current state of the resource.

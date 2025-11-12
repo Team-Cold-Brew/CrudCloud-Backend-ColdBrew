@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.exception;
+package com.riwi.CrudCloud.auth.util.exception.classes;
 
 public class AuthException extends RuntimeException {
 

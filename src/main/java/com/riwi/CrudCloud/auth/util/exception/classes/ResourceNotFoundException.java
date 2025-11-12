@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.exception;
+package com.riwi.CrudCloud.auth.util.exception.classes;
 
 /**
  * Exception thrown when a requested resource cannot be found in the database.
