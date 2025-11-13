@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrudCloud - Checkout Pro Integration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .plan-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .plan-card:hover {
+            border-color: #009ee3;
+            transform: translateY(-2px);
+        }
+        .plan-card.selected {
+            border-color: #009ee3;
+            background-color: #f0f8ff;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #009ee3;
+        }
+        .btn {
+            background-color: #009ee3;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #007bb3;
+        }
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #payment-form {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .hidden {
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #2e7d32;
+            background-color: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 CrudCloud - Upgrade Your Plan</h1>
+        <p>Choose a plan and pay with MercadoPago Checkout Pro</p>
+
+        <!-- Plan Selection -->
+        <div id="plan-selection">
+            <h3>Select a Plan:</h3>
+            
+            <div class="plan-card" data-plan-id="2" data-price="29.99">
+                <h4>📊 STANDARD Plan</h4>
+                <div class="price">$29.99/month</div>
+                <ul>
+                    <li>5 Database Instances</li>
+                    <li>10GB Storage</li>
+                    <li>Email Support</li>
+                </ul>
+            </div>
+
+            <div class="plan-card" data-plan-id="3" data-price="99.99">
+                <h4>⭐ PREMIUM Plan</h4>
+                <div class="price">$99.99/month</div>
+                <ul>
+                    <li>20 Database Instances</li>
+                    <li>100GB Storage</li>
+                    <li>24/7 Support</li>
+                    <li>Automatic Backups</li>
+                </ul>
+            </div>
+
+            <button id="select-plan-btn" class="btn" disabled>Select Plan</button>
+        </div>
+
+        <!-- Payment Form -->
+        <div id="payment-form" class="hidden">
+            <h3>💳 Payment Details</h3>
+            <div id="payment-loading" class="loading hidden">
+                <p>Loading payment form...</p>
+            </div>
+            <div id="payment-error" class="error hidden"></div>
+            <div id="payment-success" class="success hidden"></div>
+            
+            <!-- MercadoPago Checkout Pro will be rendered here -->
+            <div id="mercadopago-checkout"></div>
+        </div>
+    </div>
+
+    <!-- MercadoPago SDK -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8080/api/payments';
+        const USER_ID = 1; // This should come from your authentication system
+        
+        let selectedPlan = null;
+        let mp = null;
+        let checkout = null;
+
+        // DOM Elements
+        const planCards = document.querySelectorAll('.plan-card');
+        const selectPlanBtn = document.getElementById('select-plan-btn');
+        const planSelection = document.getElementById('plan-selection');
+        const paymentForm = document.getElementById('payment-form');
+        const paymentLoading = document.getElementById('payment-loading');
+        const paymentError = document.getElementById('payment-error');
+        const paymentSuccess = document.getElementById('payment-success');
+
+        // Plan selection logic
+        planCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove previous selection
+                planCards.forEach(c => c.classList.remove('selected'));
+                
+                // Select current card
+                card.classList.add('selected');
+                selectedPlan = {
+                    id: parseInt(card.dataset.planId),
+                    price: parseFloat(card.dataset.price),
+                    name: card.querySelector('h4').textContent
+                };
+                
+                selectPlanBtn.disabled = false;
+            });
+        });
+
+        // Select plan button
+        selectPlanBtn.addEventListener('click', async () => {
+            if (!selectedPlan) return;
+            
+            try {
+                showLoading();
+                await createPreferenceAndInitCheckout();
+            } catch (error) {
+                showError('Error creating payment preference: ' + error.message);
+            }
+        });
+
+        // Create preference and initialize Checkout Pro
+        async function createPreferenceAndInitCheckout() {
+            const requestData = {
+                planId: selectedPlan.id,
+                userId: USER_ID,
+                organizationId: null,
+                amount: selectedPlan.price,
+                currency: "USD",
+                description: `Upgrade to ${selectedPlan.name}`
+            };
+
+            const response = await fetch(`${API_BASE_URL}/create-preference`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create preference');
+            }
+
+            const data = await response.json();
+            console.log('Preference created:', data);
+
+            // Initialize MercadoPago with public key
+            mp = new MercadoPago(data.publicKey, {
+                locale: 'en-US' // or 'es-AR', 'pt-BR', etc.
+            });
+
+            // Create checkout
+            checkout = mp.checkout({
+                preference: {
+                    id: data.preferenceId
+                },
+                render: {
+                    container: '#mercadopago-checkout',
+                    label: 'Pay with MercadoPago'
+                }
+            });
+
+            // Show payment form
+            hideLoading();
+            planSelection.style.display = 'none';
+            paymentForm.classList.remove('hidden');
+        }
+
+        // Utility functions
+        function showLoading() {
+            paymentLoading.classList.remove('hidden');
+            paymentError.classList.add('hidden');
+            paymentSuccess.classList.add('hidden');
+        }
+
+        function hideLoading() {
+            paymentLoading.classList.add('hidden');
+        }
+
+        function showError(message) {
+            hideLoading();
+            paymentError.textContent = message;
+            paymentError.classList.remove('hidden');
+            paymentSuccess.classList.add('hidden');
+        }
+
+        function showSuccess(message) {
+            hideLoading();
+            paymentSuccess.textContent = message;
+            paymentSuccess.classList.remove('hidden');
+            paymentError.classList.add('hidden');
+        }
+
+        // Handle payment success (this would be called from your success URL)
+        function handlePaymentSuccess(paymentId, status) {
+            showSuccess(`Payment successful! Payment ID: ${paymentId}, Status: ${status}`);
+            
+            // You can redirect to a success page or update the UI
+            setTimeout(() => {
+                window.location.href = '/dashboard'; // Redirect to dashboard
+            }, 3000);
+        }
+
+        // Handle payment failure (this would be called from your failure URL)
+        function handlePaymentFailure(error) {
+            showError(`Payment failed: ${error}`);
+        }
+
+        // Test API connection on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    console.log('✅ API connection successful');
+                } else {
+                    console.warn('⚠️ API connection failed');
+                }
+            } catch (error) {
+                console.error('❌ API connection error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
