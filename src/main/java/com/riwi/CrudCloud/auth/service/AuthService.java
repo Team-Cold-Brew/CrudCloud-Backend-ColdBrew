@@ -1,6 +1,7 @@
 package com.riwi.CrudCloud.auth.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +12,7 @@ import com.riwi.CrudCloud.auth.dto.response.UserResponse;
 import com.riwi.CrudCloud.auth.model.User;
 import com.riwi.CrudCloud.auth.model.UserStatus;
 import com.riwi.CrudCloud.auth.repository.UserRepository;
+import com.riwi.CrudCloud.auth.util.TokenService;
 import com.riwi.CrudCloud.auth.util.exception.classes.ConflictException;
 import com.riwi.CrudCloud.auth.util.exception.classes.ResourceNotFoundException;
 import com.riwi.CrudCloud.auth.util.exception.classes.UnauthorizedException;
@@ -23,6 +25,12 @@ public class AuthService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private TokenService tokenService;
 
     /**
      * Register a new user
@@ -43,19 +51,22 @@ public class AuthService {
             throw new ConflictException("Username already exists: " + registerRequest.getUsername());
         }
 
+        // Hash password with BCrypt
+        String hashedPassword = passwordEncoder.encode(registerRequest.getPassword());
+
         // Create new user
         User user = User.builder()
             .email(registerRequest.getEmail())
             .username(registerRequest.getUsername())
-            .password(registerRequest.getPassword()) // TODO: Hash the password with BCrypt
+            .password(hashedPassword)
             .userType(registerRequest.getUserType())
             .status(UserStatus.ACTIVE)
             .build();
 
         User savedUser = userRepository.save(user);
 
-        // TODO: Generate JWT token
-        String token = "temp-token-placeholder";
+        // Generate JWT token
+        String token = tokenService.generateToken(savedUser);
 
         UserResponse userResponse = mapToUserResponse(savedUser);
         return new AuthResponse(token, userResponse);
@@ -74,13 +85,13 @@ public class AuthService {
         User user = userRepository.findByEmail(loginRequest.getEmail())
             .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + loginRequest.getEmail()));
 
-        // TODO: Verify password with BCrypt
-        if (!user.getPassword().equals(loginRequest.getPassword())) {
+        // Verify password with BCrypt
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        // TODO: Generate JWT token
-        String token = "temp-token-placeholder";
+        // Generate JWT token
+        String token = tokenService.generateToken(user);
 
         UserResponse userResponse = mapToUserResponse(user);
         return new AuthResponse(token, userResponse);
@@ -102,29 +113,28 @@ public class AuthService {
     }
 
     /**
-     * Validate token (placeholder for JWT validation)
+     * Validate token using TokenService
      *
      * @param token the JWT token
      * @return true if token is valid
      */
     public boolean validateToken(String token) {
-        // TODO: Implement JWT validation
-        return true;
+        return tokenService.validateToken(token);
     }
 
     /**
-     * Extract user ID from token (placeholder for JWT extraction)
+     * Extract user ID from token using TokenService
      *
      * @param token the JWT token
      * @return user ID
      */
     public Integer extractUserIdFromToken(String token) {
-        // TODO: Implement JWT extraction
-        return null;
+        return tokenService.extractUserIdFromToken(token);
     }
 
     /**
      * Map User entity to UserResponse DTO
+     * Note: Password is never included in responses
      *
      * @param user the user entity
      * @return UserResponse
