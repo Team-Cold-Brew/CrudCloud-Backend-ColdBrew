@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.model;
+package com.riwi.CrudCloud.common.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

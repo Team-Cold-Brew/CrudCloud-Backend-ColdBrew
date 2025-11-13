@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.riwi.CrudCloud.auth.model.User;
+import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.auth.repository.UserRepository;
 import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AuthException;
 import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.ResourceNotFoundException;

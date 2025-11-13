@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.model;
+package com.riwi.CrudCloud.common.models;
 
 import java.time.LocalDateTime;
 
@@ -109,5 +109,33 @@ public class User {
      */
     public boolean isDeleted() {
         return this.deletedAt != null;
+    }
+
+    /**
+     * Check if user registered via OAuth
+     */
+    public boolean isOAuthUser() {
+        return this.oauthProvider != null;
+    }
+
+    /**
+     * Check if user registered with password
+     */
+    public boolean isPasswordUser() {
+        return this.password != null;
+    }
+
+    /**
+     * Get full name
+     */
+    public String getFullName() {
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        } else if (firstName != null) {
+            return firstName;
+        } else if (lastName != null) {
+            return lastName;
+        }
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.model;
+package com.riwi.CrudCloud.common.models;
 
 public enum UserType {
     INDIVIDUAL,

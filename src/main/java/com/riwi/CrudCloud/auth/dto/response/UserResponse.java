@@ -2,7 +2,7 @@ package com.riwi.CrudCloud.auth.dto.response;
 
 import java.time.LocalDateTime;
 
-import com.riwi.CrudCloud.auth.model.UserType;
+import com.riwi.CrudCloud.common.models.UserType;
 
 public class UserResponse {
 

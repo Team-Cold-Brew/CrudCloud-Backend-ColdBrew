@@ -1,8 +1,8 @@
 package com.riwi.CrudCloud.auth.service;
 
 import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
-import com.riwi.CrudCloud.auth.model.OAuthProvider;
-import com.riwi.CrudCloud.auth.model.User;
+import com.riwi.CrudCloud.common.models.OAuthProvider;
+import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.auth.repository.UserRepository;
 import com.riwi.CrudCloud.auth.util.TokenService;
 import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AccountLinkingException;

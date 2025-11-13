@@ -3,7 +3,7 @@ package com.riwi.CrudCloud.auth.controller;
 import com.riwi.CrudCloud.auth.dto.request.OAuthCallbackRequest;
 import com.riwi.CrudCloud.auth.dto.response.AuthResponse;
 import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
-import com.riwi.CrudCloud.auth.model.OAuthProvider;
+import com.riwi.CrudCloud.common.models.OAuthProvider;
 import com.riwi.CrudCloud.auth.service.GoogleOAuthService;
 import com.riwi.CrudCloud.auth.service.GitHubOAuthService;
 import com.riwi.CrudCloud.auth.service.OAuthUserProcessorService;
