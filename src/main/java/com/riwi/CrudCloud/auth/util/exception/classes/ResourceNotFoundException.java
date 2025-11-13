@@ -1,22 +1,29 @@
 package com.riwi.CrudCloud.auth.util.exception.classes;
 
+import org.springframework.http.HttpStatus;
+
+import com.riwi.CrudCloud.auth.util.exception.ClientErrorException;
+
 /**
  * Exception thrown when a requested resource cannot be found in the database.
  * HTTP Status: 404 Not Found
+ * Category: ClientErrorException (4xx client error)
  * 
  * Used for:
  * - Entity ID doesn't exist
  * - User requests a non-existent resource
  * - Database query returns no results
+ * 
+ * Can be caught as: catch (ClientErrorException e) { ... }
  */
-public class ResourceNotFoundException extends RuntimeException {
+public class ResourceNotFoundException extends ClientErrorException {
     
     public ResourceNotFoundException(String message) {
-        super(message);
+        super(HttpStatus.NOT_FOUND.value(), message);
     }
     
     public ResourceNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+        super(HttpStatus.NOT_FOUND.value(), message, cause);
     }
     
     /**
