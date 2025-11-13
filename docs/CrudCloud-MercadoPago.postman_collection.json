@@ -1,0 +1,234 @@
+{
+	"info": {
+		"_postman_id": "12345678-1234-1234-1234-123456789abc",
+		"name": "CrudCloud - MercadoPago API",
+		"description": "Colección de pruebas para el módulo MercadoPago de CrudCloud",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health & Config",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/payments/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"health"
+							]
+						},
+						"description": "Verificar que el módulo MercadoPago está funcionando"
+					}
+				},
+				{
+					"name": "Config Test",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/payments/config-test",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"config-test"
+							]
+						},
+						"description": "Verificar configuración de MercadoPago y endpoints disponibles"
+					}
+				}
+			]
+		},
+		{
+			"name": "Payment Operations",
+			"item": [
+				{
+					"name": "Create Payment Preference",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"planId\": 2,\n    \"userId\": 1,\n    \"organizationId\": null,\n    \"amount\": 29.99,\n    \"currency\": \"USD\",\n    \"description\": \"Upgrade to STANDARD plan\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payments/create-preference",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"create-preference"
+							]
+						},
+						"description": "Crear una preferencia de pago para upgrade de plan"
+					}
+				},
+				{
+					"name": "Process Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"payment\",\n    \"data\": {\n        \"id\": \"123456789\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payments/webhook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"webhook"
+							]
+						},
+						"description": "Simular webhook de MercadoPago (para testing)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Transaction Queries",
+			"item": [
+				{
+					"name": "Get Transaction History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/payments/history?userId={{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"history"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{user_id}}"
+								}
+							]
+						},
+						"description": "Obtener historial de transacciones de un usuario"
+					}
+				},
+				{
+					"name": "Get Transaction Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/payments/transaction/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"transaction",
+								"{{transaction_id}}"
+							]
+						},
+						"description": "Obtener detalles específicos de una transacción"
+					}
+				},
+				{
+					"name": "Get Payment Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/payments/status/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"status",
+								"{{transaction_id}}"
+							]
+						},
+						"description": "Verificar estado actual de un pago"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "transaction_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
