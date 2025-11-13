@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.util.exception.handlers;
+package com.riwi.CrudCloud.auth.util.exception.handlers.client_errors;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.riwi.CrudCloud.auth.util.exception.classes.BadRequestException;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.BadRequestException;
 import com.riwi.CrudCloud.auth.util.exception.dto.ErrorResponse;
 
 /**

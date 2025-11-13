@@ -58,19 +58,19 @@ auth/
 │   └── PlanService.java
 └── util/
     └── exception/
+        ├── ApplicationException.java (base class)
+        ├── ClientErrorException.java (4xx errors)
+        ├── ServerErrorException.java (5xx errors)
         ├── GlobalExceptionHandler.java
         ├── classes/
-        │   ├── AuthException.java
-        │   ├── BadRequestException.java
-        │   ├── ConflictException.java
-        │   ├── DatabaseException.java
-        │   ├── ForbiddenException.java
-        │   ├── InvalidCredentialsException.java (deprecated)
-        │   ├── ResourceNotFoundException.java
-        │   ├── UnauthorizedException.java
-        │   ├── UnprocessableEntityException.java
-        │   ├── UserAlreadyExistsException.java (deprecated)
-        │   └── UserNotFoundException.java (deprecated)
+        │   ├── AuthException.java (legacy, 401)
+        │   ├── BadRequestException.java (400)
+        │   ├── ConflictException.java (409)
+        │   ├── DatabaseException.java (500)
+        │   ├── ForbiddenException.java (403)
+        │   ├── ResourceNotFoundException.java (404)
+        │   ├── UnauthorizedException.java (401)
+        │   └── UnprocessableEntityException.java (422)
         ├── handlers/
         │   ├── AuthenticationExceptionHandler.java
         │   ├── BusinessLogicExceptionHandler.java
@@ -83,14 +83,77 @@ auth/
 
 ---
 
+## Exception Hierarchy
+
+The application uses a **three-tier exception hierarchy** for organized and type-safe error handling:
+
+```
+RuntimeException
+    └── ApplicationException (base class for all custom exceptions)
+        ├── ClientErrorException (4xx client errors)
+        │   ├── BadRequestException (400)
+        │   ├── UnauthorizedException (401)
+        │   ├── ForbiddenException (403)
+        │   ├── ResourceNotFoundException (404)
+        │   ├── ConflictException (409)
+        │   ├── UnprocessableEntityException (422)
+        │   └── AuthException (401 - legacy)
+        │
+        └── ServerErrorException (5xx server errors)
+            └── DatabaseException (500)
+```
+
+### Hierarchy Benefits
+
+**1. Type-Safe Exception Catching:**
+```java
+// Catch all 4xx client errors
+try {
+    operation();
+} catch (ClientErrorException e) {
+    handleClientError(e);
+}
+
+// Catch all 5xx server errors
+catch (ServerErrorException e) {
+    handleServerError(e);
+}
+
+// Catch any application exception
+catch (ApplicationException e) {
+    int httpStatus = e.getHttpStatus();
+    handleApplicationError(e);
+}
+```
+
+**2. Built-In HTTP Status Codes:**
+Each exception automatically carries its HTTP status code via the `getHttpStatus()` method from `ApplicationException`:
+```java
+BadRequestException e = new BadRequestException("Invalid input");
+e.getHttpStatus();  // Returns 400
+
+DatabaseException e = new DatabaseException("Connection failed", cause);
+e.getHttpStatus();  // Returns 500
+```
+
+**3. Semantic Organization:**
+- **ClientErrorException (4xx):** Client made an error - don't retry
+- **ServerErrorException (5xx):** Server problem - can retry with backoff
+
+---
+
 ## Custom Exceptions
 
 ### 1. **BadRequestException** (HTTP 400)
 
 ```java
-public class BadRequestException extends RuntimeException {
+public class BadRequestException extends ClientErrorException {
     public BadRequestException(String message) {
-        super(message);
+        super(HttpStatus.BAD_REQUEST.value(), message);
+    }
+    
+    public BadRequestException(String message, Throwable cause) {
+        super(HttpStatus.BAD_REQUEST.value(), message, cause);
     }
 }
 ```
@@ -98,6 +161,8 @@ public class BadRequestException extends RuntimeException {
 **Purpose:** Thrown when a request contains syntactically invalid data.
 
 **HTTP Status:** 400 Bad Request
+
+**Hierarchy:** `RuntimeException` → `ApplicationException` → `ClientErrorException` → `BadRequestException`
 
 **When to Use:**
 - Missing required fields
@@ -111,14 +176,25 @@ if (email == null || email.isEmpty()) {
 }
 ```
 
+**Can be caught as:**
+```java
+catch (BadRequestException e) { }         // Specific
+catch (ClientErrorException e) { }        // Category (4xx)
+catch (ApplicationException e) { }        // Any custom exception
+```
+
 ---
 
 ### 2. **UnauthorizedException** (HTTP 401)
 
 ```java
-public class UnauthorizedException extends RuntimeException {
+public class UnauthorizedException extends ClientErrorException {
     public UnauthorizedException(String message) {
-        super(message);
+        super(HttpStatus.UNAUTHORIZED.value(), message);
+    }
+    
+    public UnauthorizedException(String message, Throwable cause) {
+        super(HttpStatus.UNAUTHORIZED.value(), message, cause);
     }
 }
 ```
@@ -127,9 +203,11 @@ public class UnauthorizedException extends RuntimeException {
 
 **HTTP Status:** 401 Unauthorized
 
+**Hierarchy:** `RuntimeException` → `ApplicationException` → `ClientErrorException` → `UnauthorizedException`
+
 **Key Distinction:**
-- **401 Unauthorized** = "I don't know who you are" (authentication failure)
-- **403 Forbidden** = "I know who you are, but you can't do that" (authorization failure)
+- **401 Unauthorized** = "I don't know who you are" or "Invalid credentials"
+- **403 Forbidden** = "I know who you are, but you can't do that"
 
 **When to Use:**
 - Wrong password provided
@@ -143,14 +221,25 @@ if (!validPassword(user, password)) {
 }
 ```
 
+**Can be caught as:**
+```java
+catch (UnauthorizedException e) { }       // Specific
+catch (ClientErrorException e) { }        // Category (4xx)
+catch (ApplicationException e) { }        // Any custom exception
+```
+
 ---
 
 ### 3. **ForbiddenException** (HTTP 403)
 
 ```java
-public class ForbiddenException extends RuntimeException {
+public class ForbiddenException extends ClientErrorException {
     public ForbiddenException(String message) {
-        super(message);
+        super(HttpStatus.FORBIDDEN.value(), message);
+    }
+    
+    public ForbiddenException(String message, Throwable cause) {
+        super(HttpStatus.FORBIDDEN.value(), message, cause);
     }
 }
 ```
@@ -158,6 +247,8 @@ public class ForbiddenException extends RuntimeException {
 **Purpose:** Thrown when a user lacks authorization to access a resource.
 
 **HTTP Status:** 403 Forbidden
+
+**Hierarchy:** `RuntimeException` → `ApplicationException` → `ClientErrorException` → `ForbiddenException`
 
 **When to Use:**
 - User tries to delete a resource they don't own
@@ -171,26 +262,43 @@ if (!resource.getOwnerId().equals(currentUserId)) {
 }
 ```
 
+**Can be caught as:**
+```java
+catch (ForbiddenException e) { }          // Specific
+catch (ClientErrorException e) { }        // Category (4xx)
+catch (ApplicationException e) { }        // Any custom exception
+```
+
 ---
 
 ### 4. **ResourceNotFoundException** (HTTP 404)
 
 ```java
-public class ResourceNotFoundException extends RuntimeException {
+public class ResourceNotFoundException extends ClientErrorException {
+    
     public ResourceNotFoundException(String message) {
-        super(message);
+        super(HttpStatus.NOT_FOUND.value(), message);
     }
     
-    // Factory methods for common scenarios
-    public static ResourceNotFoundException withResource(String resourceType, String identifier) {
+    public ResourceNotFoundException(String message, Throwable cause) {
+        super(HttpStatus.NOT_FOUND.value(), message, cause);
+    }
+    
+    /**
+     * Factory method for easier resource not found messages
+     */
+    public static ResourceNotFoundException withResource(String resourceType, String field, Object value) {
         return new ResourceNotFoundException(
-            String.format("%s with %s not found", resourceType, identifier)
+            String.format("%s not found with %s: %s", resourceType, field, value)
         );
     }
     
-    public static ResourceNotFoundException withId(String resourceType, Integer id) {
+    /**
+     * Factory method for ID-based lookups
+     */
+    public static ResourceNotFoundException withId(String resourceType, Object id) {
         return new ResourceNotFoundException(
-            String.format("%s with ID %d not found", resourceType, id)
+            String.format("%s not found with ID: %s", resourceType, id)
         );
     }
 }
@@ -200,15 +308,35 @@ public class ResourceNotFoundException extends RuntimeException {
 
 **HTTP Status:** 404 Not Found
 
+**Hierarchy:** `RuntimeException` → `ApplicationException` → `ClientErrorException` → `ResourceNotFoundException`
+
+**Factory Methods:**
+- `ResourceNotFoundException.withId(resourceType, id)` - For ID-based lookups
+- `ResourceNotFoundException.withResource(resourceType, field, value)` - For field-based lookups
+
 **When to Use:**
 - Project/Plan ID doesn't exist
 - User requests a non-existent resource
 - Database query returns no results
 
-**Example:**
+**Examples:**
 ```java
+// Using factory methods
 return repository.findById(id)
-    .orElseThrow(() -> ResourceNotFoundException.withId("Project", id));
+    .orElseThrow(() -> ResourceNotFoundException.withId("User", id));
+
+// Or using withResource
+throw ResourceNotFoundException.withResource("Project", "slug", "invalid-slug");
+
+// Or direct message
+throw new ResourceNotFoundException("User with ID 999 not found");
+```
+
+**Can be caught as:**
+```java
+catch (ResourceNotFoundException e) { }   // Specific
+catch (ClientErrorException e) { }        // Category (4xx)
+catch (ApplicationException e) { }        // Any custom exception
 ```
 
 ---
@@ -216,9 +344,13 @@ return repository.findById(id)
 ### 5. **ConflictException** (HTTP 409)
 
 ```java
-public class ConflictException extends RuntimeException {
+public class ConflictException extends ClientErrorException {
     public ConflictException(String message) {
-        super(message);
+        super(HttpStatus.CONFLICT.value(), message);
+    }
+    
+    public ConflictException(String message, Throwable cause) {
+        super(HttpStatus.CONFLICT.value(), message, cause);
     }
 }
 ```
@@ -226,6 +358,8 @@ public class ConflictException extends RuntimeException {
 **Purpose:** Thrown when a request conflicts with the current state of the resource or violates uniqueness constraints.
 
 **HTTP Status:** 409 Conflict
+
+**Hierarchy:** `RuntimeException` → `ApplicationException` → `ClientErrorException` → `ConflictException`
 
 **When to Use:**
 - State machine violations (e.g., transitioning COMPLETED → PENDING)
@@ -240,14 +374,25 @@ if (userRepository.existsByEmail(email)) {
 }
 ```
 
+**Can be caught as:**
+```java
+catch (ConflictException e) { }           // Specific
+catch (ClientErrorException e) { }        // Category (4xx)
+catch (ApplicationException e) { }        // Any custom exception
+```
+
 ---
 
 ### 6. **UnprocessableEntityException** (HTTP 422)
 
 ```java
-public class UnprocessableEntityException extends RuntimeException {
+public class UnprocessableEntityException extends ClientErrorException {
     public UnprocessableEntityException(String message) {
-        super(message);
+        super(HttpStatus.UNPROCESSABLE_ENTITY.value(), message);
+    }
+    
+    public UnprocessableEntityException(String message, Throwable cause) {
+        super(HttpStatus.UNPROCESSABLE_ENTITY.value(), message, cause);
     }
 }
 ```
@@ -256,9 +401,11 @@ public class UnprocessableEntityException extends RuntimeException {
 
 **HTTP Status:** 422 Unprocessable Entity
 
+**Hierarchy:** `RuntimeException` → `ApplicationException` → `ClientErrorException` → `UnprocessableEntityException`
+
 **Key Distinction from BadRequestException:**
 - **400 (BadRequest):** Syntax is invalid (JSON doesn't parse, missing required fields)
-- **422 (UnprocessableEntity):** Syntax is valid, but violates business rules
+- **422 (UnprocessableEntity):** Syntax is valid, but violates business rules or semantic validation
 
 **When to Use:**
 - Request JSON is valid, but contains restricted keywords
@@ -273,14 +420,25 @@ if (restrictedKeywords.contains(projectName.toLowerCase())) {
 }
 ```
 
+**Can be caught as:**
+```java
+catch (UnprocessableEntityException e) { } // Specific
+catch (ClientErrorException e) { }         // Category (4xx)
+catch (ApplicationException e) { }         // Any custom exception
+```
+
 ---
 
 ### 7. **DatabaseException** (HTTP 500)
 
 ```java
-public class DatabaseException extends RuntimeException {
+public class DatabaseException extends ServerErrorException {
+    public DatabaseException(String message) {
+        super(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
+    }
+    
     public DatabaseException(String message, Throwable cause) {
-        super(message, cause);
+        super(HttpStatus.INTERNAL_SERVER_ERROR.value(), message, cause);
     }
 }
 ```
@@ -288,6 +446,8 @@ public class DatabaseException extends RuntimeException {
 **Purpose:** Thrown when database operations fail unexpectedly.
 
 **HTTP Status:** 500 Internal Server Error
+
+**Hierarchy:** `RuntimeException` → `ApplicationException` → `ServerErrorException` → `DatabaseException`
 
 **When to Use:**
 - Database connection failures
@@ -303,54 +463,187 @@ try {
 }
 ```
 
+**Can be caught as:**
+```java
+catch (DatabaseException e) { }           // Specific
+catch (ServerErrorException e) { }        // Category (5xx)
+catch (ApplicationException e) { }        // Any custom exception
+```
+
+---
+
+### 8. **AuthException** (HTTP 401 - Legacy)
+
+```java
+public class AuthException extends ClientErrorException {
+
+    private String code;
+
+    public AuthException(String message) {
+        super(HttpStatus.UNAUTHORIZED.value(), message);
+        this.code = "AUTH_ERROR";
+    }
+
+    public AuthException(String message, String code) {
+        super(HttpStatus.UNAUTHORIZED.value(), message);
+        this.code = code;
+    }
+
+    public String getCode() {
+        return code;
+    }
+}
+```
+
+**Purpose:** Legacy authentication exception maintained for backward compatibility.
+
+**HTTP Status:** 401 Unauthorized
+
+**Hierarchy:** `RuntimeException` → `ApplicationException` → `ClientErrorException` → `AuthException`
+
+**Status:** ⚠️ Deprecated - Use `UnauthorizedException` for new code
+
+**Note:** This class is maintained for backward compatibility with existing code. Prefer using `UnauthorizedException` in new implementations.
+
+**Can be caught as:**
+```java
+catch (AuthException e) { }               // Legacy specific
+catch (ClientErrorException e) { }        // Category (4xx)
+catch (ApplicationException e) { }        // Any custom exception
+```
+
 ---
 
 ## Exception Handlers
 
 ### Handler Pattern
 
-Each handler class is responsible for a specific category of exceptions and their corresponding HTTP status codes. Handlers implement the following pattern:
+Each handler class is annotated with `@RestControllerAdvice` and manages a specific category of exceptions with appropriate HTTP status codes. Handlers implement the following pattern:
 
 ```java
-@ExceptionHandler(CustomException.class)
-@ResponseStatus(HttpStatus.XXX)
-public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
-    ErrorResponse response = new ErrorResponse(
-        HttpStatus.XXX.value(),
-        ex.getMessage(),
-        LocalDateTime.now()
-    );
-    return new ResponseEntity<>(response, HttpStatus.XXX);
+@RestControllerAdvice
+public class SpecificExceptionHandler {
+    
+    @ExceptionHandler(CustomException.class)
+    @ResponseStatus(HttpStatus.XXX)
+    public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.XXX.value(),
+            ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.XXX);
+    }
 }
 ```
 
+**Note:** Each handler is independently annotated with `@RestControllerAdvice`, and the `GlobalExceptionHandler` orchestrator simply imports them via `@ControllerAdvice` with `basePackageClasses`.
+
 ### 1. **ValidationExceptionHandler** (HTTP 400)
+
+Located in `auth/util/exception/handlers/ValidationExceptionHandler.java`
+
+```java
+@RestControllerAdvice
+public class ValidationExceptionHandler {
+    
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex) {
+        
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            "Validation failed",
+            errors
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+}
+```
 
 **Handles:**
 - `BadRequestException` → HTTP 400
-- `MethodArgumentNotValidException` → HTTP 400
+- `MethodArgumentNotValidException` → HTTP 400 (Spring validation failures)
 
 **Responsibilities:**
 - Validates request syntax
 - Handles Spring's built-in validation failures
 - Provides detailed field-level error messages
 
+**Response Format for BadRequestException:**
+```json
+{
+  "status": 400,
+  "message": "Email is required",
+  "timestamp": "2025-11-13T10:30:00"
+}
+```
+
 **Response Format for MethodArgumentNotValidException:**
 ```json
 {
   "status": 400,
   "message": "Validation failed",
-  "timestamp": "2025-11-12T10:30:00",
   "errors": {
     "email": "Email is required",
     "password": "Password must be at least 8 characters"
-  }
+  },
+  "timestamp": "2025-11-13T10:30:00"
 }
 ```
 
 ---
 
 ### 2. **AuthenticationExceptionHandler** (HTTP 401 & 403)
+
+Located in `auth/util/exception/handlers/AuthenticationExceptionHandler.java`
+
+```java
+@RestControllerAdvice
+public class AuthenticationExceptionHandler {
+    
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedException(
+            UnauthorizedException ex) {
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(),
+            ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+    
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> handleForbiddenException(
+            ForbiddenException ex) {
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.FORBIDDEN.value(),
+            ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+}
+```
 
 **Handles:**
 - `UnauthorizedException` → HTTP 401
@@ -362,12 +655,16 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 - Permission validation
 - Access control enforcement
 
+**Key Distinction:**
+- **401 Unauthorized** = "I don't know who you are" OR "Invalid credentials"
+- **403 Forbidden** = "I know who you are, but you can't do that"
+
 **Response Format (401):**
 ```json
 {
   "status": 401,
   "message": "Invalid credentials",
-  "timestamp": "2025-11-12T10:30:00"
+  "timestamp": "2025-11-13T10:30:00"
 }
 ```
 
@@ -376,13 +673,33 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 {
   "status": 403,
   "message": "You do not have permission to access this resource",
-  "timestamp": "2025-11-12T10:30:00"
+  "timestamp": "2025-11-13T10:30:00"
 }
 ```
 
 ---
 
 ### 3. **ResourceExceptionHandler** (HTTP 404)
+
+Located in `auth/util/exception/handlers/ResourceExceptionHandler.java`
+
+```java
+@RestControllerAdvice
+public class ResourceExceptionHandler {
+    
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+            ResourceNotFoundException ex) {
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+}
+```
 
 **Handles:**
 - `ResourceNotFoundException` → HTTP 404
@@ -396,8 +713,8 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 ```json
 {
   "status": 404,
-  "message": "User with ID 999 not found",
-  "timestamp": "2025-11-12T10:30:00"
+  "message": "User not found with ID: 999",
+  "timestamp": "2025-11-13T10:30:00"
 }
 ```
 
@@ -405,9 +722,41 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 
 ### 4. **BusinessLogicExceptionHandler** (HTTP 409 & 422)
 
+Located in `auth/util/exception/handlers/BusinessLogicExceptionHandler.java`
+
+```java
+@RestControllerAdvice
+public class BusinessLogicExceptionHandler {
+    
+    @ExceptionHandler(ConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ErrorResponse> handleConflictException(
+            ConflictException ex) {
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.CONFLICT.value(),
+            ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+    
+    @ExceptionHandler(UnprocessableEntityException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ResponseEntity<ErrorResponse> handleUnprocessableEntityException(
+            UnprocessableEntityException ex) {
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.UNPROCESSABLE_ENTITY.value(),
+            ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+}
+```
+
 **Handles:**
-- `ConflictException` → HTTP 409 Conflict
-- `UnprocessableEntityException` → HTTP 422 Unprocessable Entity
+- `ConflictException` → HTTP 409
+- `UnprocessableEntityException` → HTTP 422
 
 **Responsibilities:**
 - Business rule validation
@@ -420,7 +769,7 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 {
   "status": 409,
   "message": "User with this email already exists",
-  "timestamp": "2025-11-12T10:30:00"
+  "timestamp": "2025-11-13T10:30:00"
 }
 ```
 
@@ -429,13 +778,50 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 {
   "status": 422,
   "message": "Project name contains restricted keywords",
-  "timestamp": "2025-11-12T10:30:00"
+  "timestamp": "2025-11-13T10:30:00"
 }
 ```
 
 ---
 
 ### 5. **SystemExceptionHandler** (HTTP 500)
+
+Located in `auth/util/exception/handlers/SystemExceptionHandler.java`
+
+```java
+@RestControllerAdvice
+public class SystemExceptionHandler {
+    
+    @ExceptionHandler(DatabaseException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<ErrorResponse> handleDatabaseException(
+            DatabaseException ex) {
+        
+        // Log the cause for debugging
+        logger.error("Database operation failed", ex);
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            ex.getMessage()
+        );
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        
+        // Log the unexpected error with full stack trace
+        logger.error("Unexpected error", ex);
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            "An unexpected error occurred"
+        );
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+```
 
 **Handles:**
 - `DatabaseException` → HTTP 500
@@ -452,7 +838,7 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 {
   "status": 500,
   "message": "Database operation failed",
-  "timestamp": "2025-11-12T10:30:00"
+  "timestamp": "2025-11-13T10:30:00"
 }
 ```
 
@@ -463,13 +849,15 @@ public ResponseEntity<ErrorResponse> handleException(CustomException ex) {
 Located in `auth/util/exception/GlobalExceptionHandler.java`:
 
 ```java
-@ControllerAdvice(basePackageClasses = {
-    ValidationExceptionHandler.class,
-    AuthenticationExceptionHandler.class,
-    ResourceExceptionHandler.class,
-    BusinessLogicExceptionHandler.class,
-    SystemExceptionHandler.class
-})
+@ControllerAdvice(
+    basePackageClasses = {
+        ValidationExceptionHandler.class,
+        ResourceExceptionHandler.class,
+        AuthenticationExceptionHandler.class,
+        BusinessLogicExceptionHandler.class,
+        SystemExceptionHandler.class
+    }
+)
 public class GlobalExceptionHandler {
     // Orchestrator - delegates to specialized handlers
 }
@@ -477,8 +865,20 @@ public class GlobalExceptionHandler {
 
 **Role:** 
 - Acts as the central registration point for all exception handlers
-- Uses `@ControllerAdvice` to register the application with Spring
-- Delegates specific exception types to appropriate handler classes
+- Uses `@ControllerAdvice` with `basePackageClasses` to register the application with Spring
+- Orchestrates specialized handler classes by importing them
+
+**Architecture:**
+Each handler class is independently annotated with `@RestControllerAdvice`, and the `GlobalExceptionHandler` simply aggregates them using `@ControllerAdvice`. This allows:
+
+```
+GlobalExceptionHandler (@ControllerAdvice)
+    ├── ValidationExceptionHandler (@RestControllerAdvice)
+    ├── ResourceExceptionHandler (@RestControllerAdvice)
+    ├── AuthenticationExceptionHandler (@RestControllerAdvice)
+    ├── BusinessLogicExceptionHandler (@RestControllerAdvice)
+    └── SystemExceptionHandler (@RestControllerAdvice)
+```
 
 **Benefits of This Architecture:**
 - ✅ **Separation of Concerns:** Each handler manages one category of exceptions
@@ -486,32 +886,78 @@ public class GlobalExceptionHandler {
 - ✅ **Scalability:** New handlers can be added without modifying existing code
 - ✅ **Single Responsibility:** Each handler focuses on one task
 - ✅ **Reusability:** Handler patterns can be copied for new exceptions
+- ✅ **Modularity:** Handlers can be tested independently
 
 ---
 
 ### Error Response DTO
 
-Located in `auth/dto/ErrorResponse.java`:
+Located in `auth/util/exception/dto/ErrorResponse.java`:
 
 ```java
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-    private int status;                       // HTTP status code
-    private String message;                   // Human-readable message
-    private LocalDateTime timestamp;          // When error occurred
-    private Map<String, String> errors;       // Optional field-level errors
-    private String path;                      // Optional request path
+    
+    private int status;                    // HTTP status code
+    private String message;                // Human-readable message
+    private LocalDateTime timestamp;       // When error occurred (set automatically)
+    private Map<String, String> errors;    // Optional field-level errors
+    private String path;                   // Optional request path
+    
+    public ErrorResponse(int status, String message) {
+        this.status = status;
+        this.message = message;
+        this.timestamp = LocalDateTime.now();
+    }
+    
+    public ErrorResponse(int status, String message, LocalDateTime timestamp) {
+        this.status = status;
+        this.message = message;
+        this.timestamp = timestamp;
+    }
+    
+    public ErrorResponse(int status, String message, Map<String, String> errors) {
+        this.status = status;
+        this.message = message;
+        this.errors = errors;
+        this.timestamp = LocalDateTime.now();
+    }
+    
+    public ErrorResponse(int status, String message, String path) {
+        this.status = status;
+        this.message = message;
+        this.path = path;
+        this.timestamp = LocalDateTime.now();
+    }
+    
+    // Getters and setters...
 }
 ```
 
 **Fields:**
 - `status` - HTTP status code (400, 401, 403, 404, 409, 422, 500)
 - `message` - Clear, user-friendly error message
-- `timestamp` - ISO 8601 formatted timestamp
-- `errors` - Optional map of field-level validation errors
+- `timestamp` - ISO 8601 formatted timestamp (set automatically)
+- `errors` - Optional map of field-level validation errors (only for 400 validation errors)
 - `path` - Optional request path that caused the error
+
+**Annotation:** `@JsonInclude(JsonInclude.Include.NON_NULL)` ensures null fields are not included in JSON response
+
+**Usage in Handlers:**
+```java
+// Simple error response
+ErrorResponse response = new ErrorResponse(
+    HttpStatus.NOT_FOUND.value(),
+    "User not found"
+);
+
+// With field-level errors
+ErrorResponse response = new ErrorResponse(
+    HttpStatus.BAD_REQUEST.value(),
+    "Validation failed",
+    fieldErrors  // Map<String, String>
+);
+```
 
 ---
 
@@ -950,16 +1396,20 @@ public class ExceptionHandlerIntegrationTest {
 
 ### Adding a New Exception
 
-1. **Create the exception class** in `auth/exception/`:
+1. **Create the exception class** in `auth/util/exception/classes/`:
    ```java
-   public class RateLimitExceededException extends RuntimeException {
+   public class RateLimitExceededException extends ClientErrorException {
        public RateLimitExceededException(String message) {
-           super(message);
+           super(HttpStatus.TOO_MANY_REQUESTS.value(), message);
+       }
+       
+       public RateLimitExceededException(String message, Throwable cause) {
+           super(HttpStatus.TOO_MANY_REQUESTS.value(), message, cause);
        }
    }
    ```
 
-2. **Create a handler** in `auth/exception/handlers/`:
+2. **Create a handler** in `auth/util/exception/handlers/`:
    ```java
    @RestControllerAdvice
    public class RateLimitExceptionHandler {
@@ -968,9 +1418,8 @@ public class ExceptionHandlerIntegrationTest {
        @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
        public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitExceededException ex) {
            ErrorResponse response = new ErrorResponse(
-               429,
-               ex.getMessage(),
-               LocalDateTime.now()
+               HttpStatus.TOO_MANY_REQUESTS.value(),
+               ex.getMessage()
            );
            return new ResponseEntity<>(response, HttpStatus.TOO_MANY_REQUESTS);
        }
@@ -979,17 +1428,51 @@ public class ExceptionHandlerIntegrationTest {
 
 3. **Register in GlobalExceptionHandler:**
    ```java
-   @ControllerAdvice(basePackageClasses = {
-       ValidationExceptionHandler.class,
-       AuthenticationExceptionHandler.class,
-       ResourceExceptionHandler.class,
-       BusinessLogicExceptionHandler.class,
-       SystemExceptionHandler.class,
-       RateLimitExceptionHandler.class  // Add here
-   })
+   @ControllerAdvice(
+       basePackageClasses = {
+           ValidationExceptionHandler.class,
+           ResourceExceptionHandler.class,
+           AuthenticationExceptionHandler.class,
+           BusinessLogicExceptionHandler.class,
+           SystemExceptionHandler.class,
+           RateLimitExceptionHandler.class  // Add here
+       }
+   )
    public class GlobalExceptionHandler {
    }
    ```
+
+4. **Determine the exception hierarchy:**
+   - If it's a 4xx error: Extend `ClientErrorException`
+   - If it's a 5xx error: Extend `ServerErrorException`
+   - For custom status codes: Extend `ApplicationException` directly
+
+### Pattern for New Exceptions
+
+**Simple Exception (inherits from category):**
+```java
+public class CustomException extends ClientErrorException {
+    public CustomException(String message) {
+        super(HttpStatus.CUSTOM.value(), message);
+    }
+}
+```
+
+**Exception with Code/Category:**
+```java
+public class SpecialException extends ServerErrorException {
+    private String code;
+    
+    public SpecialException(String message, String code) {
+        super(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
+        this.code = code;
+    }
+    
+    public String getCode() {
+        return code;
+    }
+}
+```
 
 ---
 
@@ -1002,7 +1485,7 @@ public class ExceptionHandlerIntegrationTest {
 | Invalid authentication token | `UnauthorizedException` | 401 | "Invalid or expired token" |
 | Wrong password | `UnauthorizedException` | 401 | "Invalid credentials" |
 | User lacks permission | `ForbiddenException` | 403 | "You do not have permission to delete this resource" |
-| Resource doesn't exist | `ResourceNotFoundException` | 404 | "User with ID 999 not found" |
+| Resource doesn't exist | `ResourceNotFoundException` | 404 | "User not found with ID: 999" |
 | Duplicate email/username | `ConflictException` | 409 | "Email already registered" |
 | Invalid state transition | `ConflictException` | 409 | "Cannot revert completed project" |
 | Restricted keywords in input | `UnprocessableEntityException` | 422 | "Project name contains restricted keywords" |
@@ -1016,18 +1499,19 @@ public class ExceptionHandlerIntegrationTest {
 The CrudCloud exception handling system provides:
 
 - **Clarity:** Developers know which exception to throw and when
-- **Consistency:** All exceptions follow the same format and patterns
-- **Maintainability:** Organized structure makes changes easy
+- **Consistency:** All exceptions follow the same hierarchy and patterns
+- **Maintainability:** Organized structure with clear separation of concerns
 - **Scalability:** New exceptions can be added without disrupting existing code
 - **User Experience:** Clients receive meaningful, consistent error responses
 - **REST Compliance:** Proper HTTP status codes and response formats
-- **Debugging:** Detailed error messages with optional field-level context
+- **Type Safety:** Category-based exception catching (4xx vs 5xx)
+- **Debugging:** Built-in HTTP status codes with optional field-level error details
 
 By following this architecture, the application ensures robust error handling that is easy to understand, maintain, and extend.
 
 ---
 
-**Last Updated:** November 12, 2025  
-**Version:** 2.1  
-**Aligned With:** EXCEPTION_HANDLING_IMPLEMENTATION.md  
-**Status:** Refactored - Exception package moved to `auth/util/exception/` with organized subdirectories
+**Last Updated:** November 13, 2025  
+**Version:** 3.0  
+**Status:** ✅ Updated - Documentation now reflects three-tier exception hierarchy  
+**Aligned With:** Exception implementation in `auth/util/exception/` with `ApplicationException`, `ClientErrorException`, and `ServerErrorException` base classes

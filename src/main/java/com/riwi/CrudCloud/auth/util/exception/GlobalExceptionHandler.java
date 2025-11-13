@@ -2,11 +2,12 @@ package com.riwi.CrudCloud.auth.util.exception;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
-import com.riwi.CrudCloud.auth.util.exception.handlers.AuthenticationExceptionHandler;
-import com.riwi.CrudCloud.auth.util.exception.handlers.BusinessLogicExceptionHandler;
-import com.riwi.CrudCloud.auth.util.exception.handlers.ResourceExceptionHandler;
-import com.riwi.CrudCloud.auth.util.exception.handlers.SystemExceptionHandler;
-import com.riwi.CrudCloud.auth.util.exception.handlers.ValidationExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.client_errors.AuthenticationExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.client_errors.BusinessLogicExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.client_errors.OAuthExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.client_errors.ResourceExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.server_errors.SystemExceptionHandler;
+import com.riwi.CrudCloud.auth.util.exception.handlers.client_errors.ValidationExceptionHandler;
 
 /**
  * Global exception handler orchestrator for the auth module.
@@ -15,22 +16,23 @@ import com.riwi.CrudCloud.auth.util.exception.handlers.ValidationExceptionHandle
  * Each handler manages a specific category of exceptions with appropriate HTTP status codes.
  * 
  * Architecture Overview:
- * ┌─────────────────────────────────────┐
- * │  GlobalExceptionHandler (Orchestrator)│
- * │      (@ControllerAdvice)            │
- * └─────────────────────────────────────┘
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │        GlobalExceptionHandler (Orchestrator)                    │
+ * │            (@ControllerAdvice)                                 │
+ * └─────────────────────────────────────────────────────────────────┘
  *              │
- *    ┌─────────┼─────────┬──────────┬──────────┐
- *    ▼         ▼         ▼          ▼          ▼
- * Validation  Resource  Auth      Business  System
- * (400)       (404)     (403)     (409,422)  (500)
+ *    ┌─────────┼──────────┬──────────┬───────────┬──────────┬─────────┐
+ *    ▼         ▼          ▼          ▼           ▼          ▼         ▼
+ * Validation  Resource  Auth       Business   System     OAuth
+ * (400)       (404)     (401,403)  (409,422)  (500)      (400,409)
  * 
  * Handler Categories:
  * - ValidationExceptionHandler: HTTP 400 Bad Request
  * - ResourceExceptionHandler: HTTP 404 Not Found
- * - AuthenticationExceptionHandler: HTTP 403 Forbidden
+ * - AuthenticationExceptionHandler: HTTP 401 Unauthorized & 403 Forbidden
  * - BusinessLogicExceptionHandler: HTTP 409 Conflict & 422 Unprocessable Entity
  * - SystemExceptionHandler: HTTP 500 Internal Server Error
+ * - OAuthExceptionHandler: HTTP 400 Bad Request (OAuth) & 409 Conflict (Account Linking)
  * 
  * Benefits:
  * ✅ Separation of Concerns: Each handler manages one category
@@ -45,7 +47,8 @@ import com.riwi.CrudCloud.auth.util.exception.handlers.ValidationExceptionHandle
         ResourceExceptionHandler.class,
         AuthenticationExceptionHandler.class,
         BusinessLogicExceptionHandler.class,
-        SystemExceptionHandler.class
+        SystemExceptionHandler.class,
+        OAuthExceptionHandler.class
     }
 )
 public class GlobalExceptionHandler {

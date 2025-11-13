@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.util.exception;
+package com.riwi.CrudCloud.auth.util.exception.base;
 
 /**
  * Base exception for all 5xx server errors.

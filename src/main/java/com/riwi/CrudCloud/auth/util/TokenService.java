@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 
 import com.riwi.CrudCloud.auth.model.User;
 import com.riwi.CrudCloud.auth.repository.UserRepository;
-import com.riwi.CrudCloud.auth.util.exception.classes.AuthException;
-import com.riwi.CrudCloud.auth.util.exception.classes.ResourceNotFoundException;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AuthException;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.ResourceNotFoundException;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

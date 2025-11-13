@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.util.exception.handlers;
+package com.riwi.CrudCloud.auth.util.exception.handlers.client_errors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.riwi.CrudCloud.auth.util.exception.classes.ConflictException;
-import com.riwi.CrudCloud.auth.util.exception.classes.UnprocessableEntityException;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.ConflictException;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.UnprocessableEntityException;
 import com.riwi.CrudCloud.auth.util.exception.dto.ErrorResponse;
 
 /**

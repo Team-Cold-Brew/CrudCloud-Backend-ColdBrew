@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.util.exception.handlers;
+package com.riwi.CrudCloud.auth.util.exception.handlers.server_errors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.riwi.CrudCloud.auth.util.exception.classes.DatabaseException;
+import com.riwi.CrudCloud.auth.util.exception.classes.server_errors.DatabaseException;
 import com.riwi.CrudCloud.auth.util.exception.dto.ErrorResponse;
 
 /**

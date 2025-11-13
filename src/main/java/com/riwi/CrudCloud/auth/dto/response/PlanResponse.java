@@ -7,17 +7,17 @@ public class PlanResponse {
     private Integer planId;
     private String name;
     private String description;
-    private Integer maxInstances;
+    private Integer maxDatabases;
     private BigDecimal price;
     private String billingCycle;
 
     // Constructor
-    public PlanResponse(Integer planId, String name, String description, Integer maxInstances,
+    public PlanResponse(Integer planId, String name, String description, Integer maxDatabases,
                        BigDecimal price, String billingCycle) {
         this.planId = planId;
         this.name = name;
         this.description = description;
-        this.maxInstances = maxInstances;
+        this.maxDatabases = maxDatabases;
         this.price = price;
         this.billingCycle = billingCycle;
     }
@@ -47,12 +47,12 @@ public class PlanResponse {
         this.description = description;
     }
 
-    public Integer getMaxInstances() {
-        return maxInstances;
+    public Integer getMaxDatabases() {
+        return maxDatabases;
     }
 
-    public void setMaxInstances(Integer maxInstances) {
-        this.maxInstances = maxInstances;
+    public void setMaxDatabases(Integer maxDatabases) {
+        this.maxDatabases = maxDatabases;
     }
 
     public BigDecimal getPrice() {

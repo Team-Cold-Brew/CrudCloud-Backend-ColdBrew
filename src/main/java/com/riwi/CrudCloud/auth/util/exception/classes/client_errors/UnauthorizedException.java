@@ -1,24 +1,22 @@
-package com.riwi.CrudCloud.auth.util.exception.classes;
+package com.riwi.CrudCloud.auth.util.exception.classes.client_errors;
 
 import org.springframework.http.HttpStatus;
 
-import com.riwi.CrudCloud.auth.util.exception.ClientErrorException;
+import com.riwi.CrudCloud.auth.util.exception.base.ClientErrorException;
 
 /**
- * Exception thrown when authentication fails or credentials are invalid.
+ * Exception thrown when authentication fails (invalid credentials).
  * HTTP Status: 401 Unauthorized
  * Category: ClientErrorException (4xx client error)
  * 
- * Used for:
- * - Invalid email/password combination
- * - Expired or invalid JWT token
- * - Missing authentication credentials
- * - Authentication validation failures
- * 
- * Distinction:
+ * Key Distinction:
  * - 401 Unauthorized: "I don't know who you are" or "Invalid credentials"
  * - 403 Forbidden: "I know who you are, but you can't do that"
- * - 400 Bad Request: "Your request format is invalid"
+ * 
+ * Used for:
+ * - Wrong password provided
+ * - Invalid authentication token
+ * - User not found during login
  * 
  * Can be caught as: catch (ClientErrorException e) { ... }
  */

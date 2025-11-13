@@ -1,8 +1,8 @@
-package com.riwi.CrudCloud.auth.util.exception.classes;
+package com.riwi.CrudCloud.auth.util.exception.classes.client_errors;
 
 import org.springframework.http.HttpStatus;
 
-import com.riwi.CrudCloud.auth.util.exception.ClientErrorException;
+import com.riwi.CrudCloud.auth.util.exception.base.ClientErrorException;
 
 /**
  * Exception thrown when a request contains syntactically invalid data.

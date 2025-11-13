@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.riwi.CrudCloud.auth.dto.response.PlanResponse;
 import com.riwi.CrudCloud.auth.model.Plan;
 import com.riwi.CrudCloud.auth.repository.PlanRepository;
-import com.riwi.CrudCloud.auth.util.exception.classes.ResourceNotFoundException;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.ResourceNotFoundException;
 
 /**
  * Service class for plan management
@@ -75,7 +75,7 @@ public class PlanService {
             plan.getPlanId(),
             plan.getName(),
             plan.getDescription(),
-            plan.getMaxInstances(),
+            plan.getMaxDatabases(),
             plan.getPrice(),
             plan.getBillingCycle()
         );

@@ -1,8 +1,8 @@
-package com.riwi.CrudCloud.auth.util.exception.classes;
+package com.riwi.CrudCloud.auth.util.exception.classes.server_errors;
 
 import org.springframework.http.HttpStatus;
 
-import com.riwi.CrudCloud.auth.util.exception.ServerErrorException;
+import com.riwi.CrudCloud.auth.util.exception.base.ServerErrorException;
 
 /**
  * Exception thrown when database operations fail unexpectedly.

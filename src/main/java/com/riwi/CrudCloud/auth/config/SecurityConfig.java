@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -27,6 +28,16 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    /**
+     * Configure RestTemplate bean for OAuth API calls
+     *
+     * @return RestTemplate bean
+     */
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 
     /**
      * Configure BCrypt password encoder with 12 rounds (strong hashing)
@@ -58,6 +69,9 @@ public class SecurityConfig {
                 // Public endpoints - Authentication
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                // OAuth endpoints
+                .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/login-urls").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/oauth/callback/**").permitAll()
                 // Public endpoints - Webhooks
                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                 // Health check

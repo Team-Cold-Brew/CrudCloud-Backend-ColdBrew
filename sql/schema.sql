@@ -5,7 +5,7 @@ CREATE TABLE plan (
     plan_id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT,
-    max_instances INT NOT NULL,
+    max_databases INT NOT NULL,
     price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     billing_cycle VARCHAR(10) DEFAULT 'monthly' CHECK (billing_cycle IN ('monthly', 'yearly')),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -58,10 +58,10 @@ CREATE TABLE organization_members (
 );
 
 -- ==========================================
--- INSTANCE
+-- DATABASE
 -- ==========================================
-CREATE TABLE instance (
-    instance_id SERIAL PRIMARY KEY,
+CREATE TABLE database (
+    database_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     user_id INT NOT NULL,
     organization_id INT,
@@ -80,8 +80,8 @@ CREATE TABLE instance (
     FOREIGN KEY (organization_id) REFERENCES organization(organization_id) ON DELETE CASCADE
 );
 
--- NOTE: Business rule enforcement (instance creator must be org member if organization_id is set)
--- is handled at the application layer in InstanceService.
+-- NOTE: Business rule enforcement (database creator must be org member if organization_id is set)
+-- is handled at the application layer in DatabaseService.
 -- This constraint cannot be enforced in PostgreSQL CHECK constraints due to subquery limitations.
 
 -- ==========================================
@@ -172,33 +172,33 @@ CREATE INDEX idx_org_members_role ON organization_members(role);
 -- Composite index for checking membership and role
 CREATE INDEX idx_org_members_org_user ON organization_members(organization_id, user_id, role);
 
--- ========== INSTANCE INDEXES ==========
+-- ========== DATABASE INDEXES ==========
 -- Index for soft delete queries
-CREATE INDEX idx_instance_deleted_at ON instance(deleted_at);
+CREATE INDEX idx_database_deleted_at ON database(deleted_at);
 
--- Index for finding instances by user (personal instances or audit trail)
-CREATE INDEX idx_instance_user_id ON instance(user_id);
+-- Index for finding databases by user (personal databases or audit trail)
+CREATE INDEX idx_database_user_id ON database(user_id);
 
--- Index for finding instances by organization
-CREATE INDEX idx_instance_organization_id ON instance(organization_id);
+-- Index for finding databases by organization
+CREATE INDEX idx_database_organization_id ON database(organization_id);
 
--- Index for finding instances by status (running, suspended, etc.)
-CREATE INDEX idx_instance_status ON instance(status);
+-- Index for finding databases by status (running, suspended, etc.)
+CREATE INDEX idx_database_status ON database(status);
 
--- Index for finding instances by database type
-CREATE INDEX idx_instance_db_type ON instance(db_type);
+-- Index for finding databases by database type
+CREATE INDEX idx_database_db_type ON database(db_type);
 
--- Composite index for instance listing by org + status
-CREATE INDEX idx_instance_org_status ON instance(organization_id, status, deleted_at);
+-- Composite index for database listing by org + status
+CREATE INDEX idx_database_org_status ON database(organization_id, status, deleted_at);
 
--- Composite index for instance listing by user + status
-CREATE INDEX idx_instance_user_status ON instance(user_id, status, deleted_at);
+-- Composite index for database listing by user + status
+CREATE INDEX idx_database_user_status ON database(user_id, status, deleted_at);
 
 -- Composite index for port allocation queries (avoid duplicates)
-CREATE INDEX idx_instance_port_host ON instance(port, host) WHERE status != 'DELETED' AND deleted_at IS NULL;
+CREATE INDEX idx_database_port_host ON database(port, host) WHERE status != 'DELETED' AND deleted_at IS NULL;
 
 -- Composite index for container lookup
-CREATE INDEX idx_instance_container_id ON instance(container_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_database_container_id ON database(container_id) WHERE deleted_at IS NULL;
 
 -- ========== TRANSACTIONS INDEXES ==========
 -- Index for finding transactions by organization

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.riwi.CrudCloud.auth.util.TokenService;
-import com.riwi.CrudCloud.auth.util.exception.classes.AuthException;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AuthException;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
