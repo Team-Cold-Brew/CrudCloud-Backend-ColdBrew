@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.auth.model;
+package com.riwi.CrudCloud.common.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,8 +35,8 @@ public class Plan {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "max_instances", nullable = false)
-    private Integer maxInstances;
+    @Column(name = "max_databases", nullable = false)
+    private Integer maxDatabases;
 
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;

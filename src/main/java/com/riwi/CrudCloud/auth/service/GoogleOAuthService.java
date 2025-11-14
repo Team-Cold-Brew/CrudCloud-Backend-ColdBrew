@@ -1,0 +1,143 @@
+package com.riwi.CrudCloud.auth.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.riwi.CrudCloud.auth.config.OAuthProviderConfig;
+import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
+import com.riwi.CrudCloud.auth.dto.response.OAuth2TokenResponse;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.OAuthException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Google OAuth Service Implementation
+ * Handles token exchange and user profile fetching from Google
+ */
+@Service("googleOAuthService")
+@Slf4j
+public class GoogleOAuthService implements OAuthService {
+
+    @Autowired
+    private OAuthProviderConfig oauthConfig;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Override
+    public OAuth2TokenResponse exchangeCodeForToken(String code) {
+        log.debug("Exchanging authorization code for access token with Google");
+
+        try {
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("code", code);
+            requestBody.put("client_id", oauthConfig.getGoogleClientId());
+            requestBody.put("client_secret", oauthConfig.getGoogleClientSecret());
+            requestBody.put("redirect_uri", oauthConfig.getRedirectUri());
+            requestBody.put("grant_type", "authorization_code");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Content-Type", "application/x-www-form-urlencoded");
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                oauthConfig.getGoogleTokenUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(convertMapToFormData(requestBody), headers),
+                String.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new OAuthException("INVALID_CODE", "Failed to exchange authorization code with Google");
+            }
+
+            JsonNode responseBody = objectMapper.readTree(response.getBody());
+            
+            if (responseBody.has("error")) {
+                throw new OAuthException("INVALID_CODE", 
+                    "Google OAuth error: " + responseBody.get("error_description").asText());
+            }
+
+            OAuth2TokenResponse tokenResponse = OAuth2TokenResponse.builder()
+                .accessToken(responseBody.get("access_token").asText())
+                .tokenType(responseBody.get("token_type").asText())
+                .expiresIn(responseBody.get("expires_in").asLong())
+                .build();
+
+            log.debug("Successfully exchanged authorization code for Google access token");
+            return tokenResponse;
+
+        } catch (OAuthException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error exchanging authorization code with Google", e);
+            throw new OAuthException("TOKEN_EXCHANGE_FAILED", 
+                "Failed to exchange authorization code with Google", e);
+        }
+    }
+
+    @Override
+    public OAuthUserResponse getUserProfile(String accessToken) {
+        log.debug("Fetching user profile from Google");
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                oauthConfig.getGoogleUserInfoUri(),
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new OAuthException("PROFILE_FETCH_FAILED", "Failed to fetch user profile from Google");
+            }
+
+            JsonNode profileNode = objectMapper.readTree(response.getBody());
+
+            OAuthUserResponse userResponse = OAuthUserResponse.builder()
+                .providerId(profileNode.get("id").asText())
+                .email(profileNode.get("email").asText())
+                .name(profileNode.get("name").asText())
+                .firstName(profileNode.has("given_name") ? profileNode.get("given_name").asText() : "")
+                .lastName(profileNode.has("family_name") ? profileNode.get("family_name").asText() : "")
+                .profilePictureUrl(profileNode.has("picture") ? profileNode.get("picture").asText() : "")
+                .build();
+
+            log.debug("Successfully fetched user profile from Google: {}", userResponse.getEmail());
+            return userResponse;
+
+        } catch (OAuthException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error fetching user profile from Google", e);
+            throw new OAuthException("PROFILE_FETCH_FAILED", "Failed to fetch user profile from Google", e);
+        }
+    }
+
+    /**
+     * Convert map to URL-encoded form data
+     */
+    private String convertMapToFormData(Map<String, String> map) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            if (sb.length() > 0) {
+                sb.append("&");
+            }
+            sb.append(entry.getKey()).append("=").append(entry.getValue());
+        }
+        return sb.toString();
+    }
+}

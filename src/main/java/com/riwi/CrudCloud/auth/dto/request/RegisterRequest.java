@@ -1,6 +1,6 @@
 package com.riwi.CrudCloud.auth.dto.request;
 
-import com.riwi.CrudCloud.auth.model.UserType;
+import com.riwi.CrudCloud.common.models.UserType;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

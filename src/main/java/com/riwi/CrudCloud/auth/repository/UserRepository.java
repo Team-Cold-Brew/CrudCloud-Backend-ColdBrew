@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.riwi.CrudCloud.auth.model.User;
-import com.riwi.CrudCloud.auth.model.UserType;
+import com.riwi.CrudCloud.common.models.User;
+import com.riwi.CrudCloud.common.models.UserType;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
@@ -65,4 +65,47 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      */
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.username = :username AND u.deletedAt IS NULL")
     boolean existsByUsernameAndNotDeleted(@Param("username") String username);
+
+    /**
+     * Find user by Google ID
+     *
+     * @param googleId the Google ID
+     * @return Optional containing the user if found
+     */
+    Optional<User> findByGoogleId(String googleId);
+
+    /**
+     * Find user by GitHub ID
+     *
+     * @param githubId the GitHub ID
+     * @return Optional containing the user if found
+     */
+    Optional<User> findByGithubId(String githubId);
+
+    /**
+     * Find user by email and not deleted
+     *
+     * @param email the user's email
+     * @return Optional containing the user if found and not deleted
+     */
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
+    Optional<User> findByEmailAndNotDeleted(@Param("email") String email);
+
+    /**
+     * Find user by Google ID and not deleted
+     *
+     * @param googleId the Google OAuth ID
+     * @return Optional containing the user if found
+     */
+    @Query("SELECT u FROM User u WHERE u.googleId = :googleId AND u.deletedAt IS NULL")
+    Optional<User> findByGoogleIdAndNotDeleted(@Param("googleId") String googleId);
+
+    /**
+     * Find user by GitHub ID and not deleted
+     *
+     * @param githubId the GitHub OAuth ID
+     * @return Optional containing the user if found
+     */
+    @Query("SELECT u FROM User u WHERE u.githubId = :githubId AND u.deletedAt IS NULL")
+    Optional<User> findByGithubIdAndNotDeleted(@Param("githubId") String githubId);
 }

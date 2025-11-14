@@ -5,7 +5,7 @@ CREATE TABLE plan (
     plan_id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT,
-    max_instances INT NOT NULL,
+    max_databases INT NOT NULL,
     price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     billing_cycle VARCHAR(10) DEFAULT 'monthly' CHECK (billing_cycle IN ('monthly', 'yearly')),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -19,7 +19,13 @@ CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NULLABLE,
+    first_name VARCHAR(100) NULLABLE,
+    last_name VARCHAR(100) NULLABLE,
+    profile_picture_url VARCHAR(500) NULLABLE,
+    google_id VARCHAR(255) UNIQUE NULLABLE,
+    github_id VARCHAR(255) UNIQUE NULLABLE,
+    oauth_provider VARCHAR(20) NULLABLE,
     user_type VARCHAR(20) NOT NULL DEFAULT 'INDIVIDUAL' CHECK (user_type IN ('INDIVIDUAL', 'ORGANIZATIONAL_USER')),
     personal_plan_id INT,
     status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')),
@@ -27,6 +33,22 @@ CREATE TABLE users (
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP,
     FOREIGN KEY (personal_plan_id) REFERENCES plan(plan_id) ON DELETE SET NULL
+);
+
+-- ==========================================
+-- USER_OAUTH_PROVIDERS (Tracking multiple OAuth providers per user)
+-- ==========================================
+CREATE TABLE user_oauth_providers (
+    provider_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    provider VARCHAR(50) NOT NULL COMMENT 'GOOGLE or GITHUB',
+    provider_user_id VARCHAR(255) NOT NULL UNIQUE,
+    provider_email VARCHAR(255),
+    provider_name VARCHAR(255),
+    linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    UNIQUE KEY uk_user_provider (user_id, provider),
+    INDEX idx_provider_user_id (provider_user_id)
 );
 
 -- ==========================================
@@ -58,10 +80,10 @@ CREATE TABLE organization_members (
 );
 
 -- ==========================================
--- INSTANCE
+-- DATABASE
 -- ==========================================
-CREATE TABLE instance (
-    instance_id SERIAL PRIMARY KEY,
+CREATE TABLE database (
+    database_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     user_id INT NOT NULL,
     organization_id INT,
@@ -80,8 +102,8 @@ CREATE TABLE instance (
     FOREIGN KEY (organization_id) REFERENCES organization(organization_id) ON DELETE CASCADE
 );
 
--- NOTE: Business rule enforcement (instance creator must be org member if organization_id is set)
--- is handled at the application layer in InstanceService.
+-- NOTE: Business rule enforcement (database creator must be org member if organization_id is set)
+-- is handled at the application layer in DatabaseService.
 -- This constraint cannot be enforced in PostgreSQL CHECK constraints due to subquery limitations.
 
 -- ==========================================
@@ -146,6 +168,17 @@ CREATE INDEX idx_users_type_status ON users(user_type, status) WHERE deleted_at 
 -- Index for plan queries (users with specific personal plan)
 CREATE INDEX idx_users_personal_plan_id ON users(personal_plan_id);
 
+-- ========== OAUTH INDEXES ==========
+-- Index for OAuth lookups
+CREATE INDEX idx_google_id ON users(google_id);
+CREATE INDEX idx_github_id ON users(github_id);
+CREATE INDEX idx_oauth_provider ON users(oauth_provider);
+
+-- Indexes for user_oauth_providers table
+CREATE INDEX idx_user_oauth_providers_user_id ON user_oauth_providers(user_id);
+CREATE INDEX idx_user_oauth_providers_provider ON user_oauth_providers(provider);
+CREATE INDEX idx_user_oauth_providers_linked_at ON user_oauth_providers(linked_at);
+
 -- ========== ORGANIZATION INDEXES ==========
 -- Index for soft delete queries
 CREATE INDEX idx_organization_deleted_at ON organization(deleted_at);
@@ -172,33 +205,33 @@ CREATE INDEX idx_org_members_role ON organization_members(role);
 -- Composite index for checking membership and role
 CREATE INDEX idx_org_members_org_user ON organization_members(organization_id, user_id, role);
 
--- ========== INSTANCE INDEXES ==========
+-- ========== DATABASE INDEXES ==========
 -- Index for soft delete queries
-CREATE INDEX idx_instance_deleted_at ON instance(deleted_at);
+CREATE INDEX idx_database_deleted_at ON database(deleted_at);
 
--- Index for finding instances by user (personal instances or audit trail)
-CREATE INDEX idx_instance_user_id ON instance(user_id);
+-- Index for finding databases by user (personal databases or audit trail)
+CREATE INDEX idx_database_user_id ON database(user_id);
 
--- Index for finding instances by organization
-CREATE INDEX idx_instance_organization_id ON instance(organization_id);
+-- Index for finding databases by organization
+CREATE INDEX idx_database_organization_id ON database(organization_id);
 
--- Index for finding instances by status (running, suspended, etc.)
-CREATE INDEX idx_instance_status ON instance(status);
+-- Index for finding databases by status (running, suspended, etc.)
+CREATE INDEX idx_database_status ON database(status);
 
--- Index for finding instances by database type
-CREATE INDEX idx_instance_db_type ON instance(db_type);
+-- Index for finding databases by database type
+CREATE INDEX idx_database_db_type ON database(db_type);
 
--- Composite index for instance listing by org + status
-CREATE INDEX idx_instance_org_status ON instance(organization_id, status, deleted_at);
+-- Composite index for database listing by org + status
+CREATE INDEX idx_database_org_status ON database(organization_id, status, deleted_at);
 
--- Composite index for instance listing by user + status
-CREATE INDEX idx_instance_user_status ON instance(user_id, status, deleted_at);
+-- Composite index for database listing by user + status
+CREATE INDEX idx_database_user_status ON database(user_id, status, deleted_at);
 
 -- Composite index for port allocation queries (avoid duplicates)
-CREATE INDEX idx_instance_port_host ON instance(port, host) WHERE status != 'DELETED' AND deleted_at IS NULL;
+CREATE INDEX idx_database_port_host ON database(port, host) WHERE status != 'DELETED' AND deleted_at IS NULL;
 
 -- Composite index for container lookup
-CREATE INDEX idx_instance_container_id ON instance(container_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_database_container_id ON database(container_id) WHERE deleted_at IS NULL;
 
 -- ========== TRANSACTIONS INDEXES ==========
 -- Index for finding transactions by organization
