@@ -1,24 +1,30 @@
 package com.riwi.CrudCloud.auth.controller;
 
-import com.riwi.CrudCloud.auth.dto.request.OAuthCallbackRequest;
-import com.riwi.CrudCloud.auth.dto.response.AuthResponse;
-import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
-import com.riwi.CrudCloud.common.models.OAuthProvider;
-import com.riwi.CrudCloud.auth.service.GoogleOAuthService;
-import com.riwi.CrudCloud.auth.service.GitHubOAuthService;
-import com.riwi.CrudCloud.auth.service.OAuthUserProcessorService;
-import com.riwi.CrudCloud.auth.dto.response.OAuth2TokenResponse;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.OAuthException;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AccountLinkingException;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.riwi.CrudCloud.auth.dto.request.OAuthCallbackRequest;
+import com.riwi.CrudCloud.auth.dto.response.AuthResponse;
+import com.riwi.CrudCloud.auth.dto.response.OAuth2TokenResponse;
+import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
+import com.riwi.CrudCloud.auth.service.GitHubOAuthService;
+import com.riwi.CrudCloud.auth.service.GoogleOAuthService;
+import com.riwi.CrudCloud.auth.service.OAuthUserProcessorService;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AccountLinkingException;
+import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.OAuthException;
+import com.riwi.CrudCloud.common.models.OAuthProvider;
 
 import jakarta.validation.Valid;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controller for OAuth 2.0 authentication endpoints
@@ -38,6 +44,21 @@ public class OAuthController {
 
     @Autowired
     private OAuthUserProcessorService oauthUserProcessorService;
+
+    /**
+     * OAuth login endpoint
+     * POST /api/auth/oauth/login/{provider}
+     *
+     * @param provider the OAuth provider (google or github)
+     * @param request the callback request containing code and state
+     * @return ResponseEntity with AuthResponse containing JWT token
+     */
+    @PostMapping("/login/{provider}")
+    public ResponseEntity<?> oauthLogin(
+            @PathVariable String provider,
+            @Valid @RequestBody OAuthCallbackRequest request) {
+        return handleOAuthCallback(provider, request);
+    }
 
     /**
      * Handle OAuth callback from provider
