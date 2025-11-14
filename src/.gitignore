@@ -25,3 +25,4 @@ replay_pid*
 
 # environments variables
 application.properties
+application-test.properties
