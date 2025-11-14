@@ -111,7 +111,7 @@ public class GitHubOAuthService implements OAuthService {
             
             String email = profileNode.has("email") && !profileNode.get("email").isNull() 
                 ? profileNode.get("email").asText()
-                : fetchPrimaryEmail(accessToken, headers);
+                : fetchPrimaryEmail(headers);
 
             // Parse name into firstName and lastName
             String fullName = profileNode.has("name") ? profileNode.get("name").asText() : "";
@@ -142,7 +142,7 @@ public class GitHubOAuthService implements OAuthService {
     /**
      * Fetch primary email from GitHub if not available in profile
      */
-    private String fetchPrimaryEmail(String accessToken, HttpHeaders headers) throws Exception {
+    private String fetchPrimaryEmail(HttpHeaders headers) throws Exception {
         log.debug("Fetching primary email from GitHub");
 
         ResponseEntity<String> response = restTemplate.exchange(

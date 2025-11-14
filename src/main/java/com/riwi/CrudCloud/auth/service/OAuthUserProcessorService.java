@@ -149,7 +149,7 @@ public class OAuthUserProcessorService {
             .firstName(oAuthUser.getFirstName())
             .lastName(oAuthUser.getLastName())
             .profilePictureUrl(oAuthUser.getProfilePictureUrl())
-            .userType(UserType.CUSTOMER) // Default user type
+            .userType(UserType.INDIVIDUAL) // Default user type
             .status(UserStatus.ACTIVE)
             .oauthProvider(provider)
             .build();
@@ -209,7 +209,7 @@ public class OAuthUserProcessorService {
      * Build AuthResponse from User
      */
     private AuthResponse buildAuthResponse(User user) {
-        String token = tokenService.generateToken(user.getUserId());
+        String token = tokenService.generateToken(user);
         UserResponse userResponse = UserResponse.builder()
             .userId(user.getUserId())
             .username(user.getUsername())
