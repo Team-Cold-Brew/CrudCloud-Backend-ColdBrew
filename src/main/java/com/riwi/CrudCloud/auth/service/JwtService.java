@@ -3,7 +3,6 @@ package com.riwi.CrudCloud.auth.service;
 import com.riwi.CrudCloud.common.models.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -53,11 +52,11 @@ public class JwtService {
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
-            .setClaims(claims)
-            .setSubject(subject)
-            .setIssuedAt(now)
-            .setExpiration(expiryDate)
-            .signWith(key, SignatureAlgorithm.HS512)
+            .claims(claims)
+            .subject(subject)
+            .issuedAt(now)
+            .expiration(expiryDate)
+            .signWith(key)
             .compact();
     }
 
@@ -115,10 +114,10 @@ public class JwtService {
      */
     private Claims getClaimsFromToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        return Jwts.parserBuilder()
-            .setSigningKey(key)
+        return Jwts.parser()
+            .verifyWith(key)
             .build()
-            .parseClaimsJws(token)
-            .getBody();
+            .parseSignedClaims(token)
+            .getPayload();
     }
 }

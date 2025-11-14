@@ -18,6 +18,19 @@ public enum OAuthProvider {
     }
 
     /**
+     * Get display name for the OAuth provider
+     *
+     * @return display name
+     */
+    public String getDisplayName() {
+        return switch (this) {
+            case GOOGLE -> "Google";
+            case GITHUB -> "GitHub";
+            case MANUAL -> "Manual";
+        };
+    }
+
+    /**
      * Get OAuthProvider from string value
      * 
      * @param value the provider value
