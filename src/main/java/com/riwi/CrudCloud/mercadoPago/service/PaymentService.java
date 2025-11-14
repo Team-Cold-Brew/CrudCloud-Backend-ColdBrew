@@ -1,9 +1,39 @@
+    /**
+     * Simple: Crea preferencia y devuelve solo el init_point
+     */
+    public String simpleCreatePreference(com.riwi.CrudCloud.mercadoPago.dto.request.SimplePreferenceRequest request) {
+        try {
+            com.mercadopago.client.preference.PreferenceItemRequest item = com.mercadopago.client.preference.PreferenceItemRequest.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .quantity(1)
+                .currencyId(request.getCurrency())
+                .unitPrice(request.getAmount())
+                .build();
+
+            java.util.List<com.mercadopago.client.preference.PreferenceItemRequest> items = new java.util.ArrayList<>();
+            items.add(item);
+
+            com.mercadopago.client.preference.PreferenceRequest preferenceRequest = com.mercadopago.client.preference.PreferenceRequest.builder()
+                .items(items)
+                .build();
+
+            com.mercadopago.resources.preference.Preference preference = preferenceClient.create(preferenceRequest);
+            return preference.getInitPoint();
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating MercadoPago preference: " + e.getMessage(), e);
+        }
+    }
+
 package com.riwi.CrudCloud.mercadoPago.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import com.riwi.CrudCloud.mercadoPago.dto.request.SimplePreferenceRequest;
+import com.riwi.CrudCloud.mercadoPago.dto.request.SimplePreferenceRequest;
+import com.riwi.CrudCloud.mercadoPago.dto.request.SimplePreferenceRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,11 +50,11 @@ import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.exceptions.MPApiException;
 
-import com.riwi.CrudCloud.auth.model.Plan;
-import com.riwi.CrudCloud.auth.model.User;
+import com.riwi.CrudCloud.common.models.Plan;
+import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.auth.repository.PlanRepository;
 import com.riwi.CrudCloud.auth.repository.UserRepository;
-import com.riwi.CrudCloud.auth.util.exception.classes.ResourceNotFoundException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ResourceNotFoundException;
 import com.riwi.CrudCloud.mercadoPago.util.exception.classes.InvalidPaymentDataException;
 import com.riwi.CrudCloud.mercadoPago.util.exception.classes.MercadoPagoException;
 import com.riwi.CrudCloud.mercadoPago.util.exception.classes.PaymentNotFoundException;
@@ -45,32 +75,35 @@ import com.riwi.CrudCloud.mercadoPago.repository.TransactionRepository;
 /**
  * Service class for payment processing with MercadoPago
  */
-@Service
-public class PaymentService {
 
-    @Autowired
-    private PreferenceClient preferenceClient;
 
-    @Autowired
-    private PaymentClient paymentClient;
 
-    @Value("${mercadopago.public-key:}")
-    private String publicKey;
+    /**
+     * Simple: Crea preferencia y devuelve solo el init_point
+     */
+    public String simpleCreatePreference(SimplePreferenceRequest request) {
+        try {
+            PreferenceItemRequest item = PreferenceItemRequest.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .quantity(1)
+                .currencyId(request.getCurrency())
+                .unitPrice(request.getAmount())
+                .build();
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+            List<PreferenceItemRequest> items = new ArrayList<>();
+            items.add(item);
 
-    @Autowired
-    private PaymentProviderRepository paymentProviderRepository;
+            PreferenceRequest preferenceRequest = PreferenceRequest.builder()
+                .items(items)
+                .build();
 
-    @Autowired
-    private CurrencyRepository currencyRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PlanRepository planRepository;
+            Preference preference = preferenceClient.create(preferenceRequest);
+            return preference.getInitPoint();
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating MercadoPago preference: " + e.getMessage(), e);
+        }
+    }
 
     /**
      * Create a payment preference for Checkout Pro

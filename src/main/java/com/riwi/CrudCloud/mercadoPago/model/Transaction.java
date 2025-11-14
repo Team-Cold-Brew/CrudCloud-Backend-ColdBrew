@@ -21,7 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import com.riwi.CrudCloud.auth.model.User;
+import com.riwi.CrudCloud.common.models.User;
 
 @Entity
 @Table(name = "transactions")
