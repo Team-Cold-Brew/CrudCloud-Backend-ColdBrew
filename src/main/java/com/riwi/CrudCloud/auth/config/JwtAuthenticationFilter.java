@@ -2,30 +2,29 @@ package com.riwi.CrudCloud.auth.config;
 
 import java.io.IOException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.riwi.CrudCloud.auth.util.TokenService;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AuthException;
+import com.riwi.CrudCloud.auth.service.TokenService;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.AuthException;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * JWT Authentication Filter
  * Validates JWT token on each request and sets authentication context
  */
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Autowired
     private TokenService tokenService;
@@ -46,15 +45,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(userId, null, null);
 
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                    logger.debug("Authentication set for user ID: {}", userId);
+                    log.debug("Authentication set for user ID: {}", userId);
                 }
             }
         } catch (AuthException e) {
-            logger.warn("Authentication failed: {}", e.getMessage());
+            log.warn("Authentication failed: {}", e.getMessage());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: " + e.getMessage());
             return;
         } catch (Exception e) {
-            logger.error("Error in JWT authentication filter", e);
+            log.error("Error in JWT authentication filter", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal server error");
             return;
         }

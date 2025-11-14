@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.riwi.CrudCloud.auth.config.OAuthProviderConfig;
 import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
 import com.riwi.CrudCloud.auth.dto.response.OAuth2TokenResponse;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.OAuthException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.OAuthException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;

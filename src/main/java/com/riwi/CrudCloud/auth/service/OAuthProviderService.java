@@ -1,7 +1,7 @@
 package com.riwi.CrudCloud.auth.service;
 
 import com.riwi.CrudCloud.auth.dto.response.OAuthProviderResponse;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AuthException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.AuthException;
 import com.riwi.CrudCloud.common.models.OAuthProvider;
 import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.common.models.UserOAuthProvider;

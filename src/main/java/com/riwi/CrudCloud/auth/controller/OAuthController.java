@@ -19,8 +19,8 @@ import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
 import com.riwi.CrudCloud.auth.service.GitHubOAuthService;
 import com.riwi.CrudCloud.auth.service.GoogleOAuthService;
 import com.riwi.CrudCloud.auth.service.OAuthUserProcessorService;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.AccountLinkingException;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.OAuthException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.AccountLinkingException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.OAuthException;
 import com.riwi.CrudCloud.common.models.OAuthProvider;
 
 import jakarta.validation.Valid;
