@@ -15,10 +15,9 @@ import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.common.models.UserStatus;
 import com.riwi.CrudCloud.common.models.UserType;
 import com.riwi.CrudCloud.auth.repository.UserRepository;
-import com.riwi.CrudCloud.auth.util.TokenService;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.ConflictException;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.ResourceNotFoundException;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.UnauthorizedException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ConflictException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ResourceNotFoundException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.UnauthorizedException;
 
 /**
  * Service class for user authentication and user management

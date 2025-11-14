@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.riwi.CrudCloud.auth.dto.response.PlanResponse;
 import com.riwi.CrudCloud.common.models.Plan;
 import com.riwi.CrudCloud.auth.repository.PlanRepository;
-import com.riwi.CrudCloud.auth.util.exception.classes.client_errors.ResourceNotFoundException;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ResourceNotFoundException;
 
 /**
  * Service class for plan management
