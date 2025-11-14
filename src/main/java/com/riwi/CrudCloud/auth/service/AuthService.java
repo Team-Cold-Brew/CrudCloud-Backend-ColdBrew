@@ -72,7 +72,12 @@ public class AuthService {
         String token = tokenService.generateToken(savedUser);
 
         UserResponse userResponse = mapToUserResponse(savedUser);
-        return new AuthResponse(token, userResponse);
+        return AuthResponse.builder()
+            .token(token)
+            .tokenType("Bearer")
+            .user(userResponse)
+            .message("User registered successfully")
+            .build();
     }
 
     /**
@@ -97,7 +102,12 @@ public class AuthService {
         String token = tokenService.generateToken(user);
 
         UserResponse userResponse = mapToUserResponse(user);
-        return new AuthResponse(token, userResponse);
+        return AuthResponse.builder()
+            .token(token)
+            .tokenType("Bearer")
+            .user(userResponse)
+            .message("Login successful")
+            .build();
     }
 
     /**
@@ -151,7 +161,12 @@ public class AuthService {
             // User already registered with OAuth, login them
             String token = tokenService.generateToken(existingUser);
             UserResponse userResponse = mapToUserResponse(existingUser);
-            return new AuthResponse(token, userResponse);
+            return AuthResponse.builder()
+                .token(token)
+                .tokenType("Bearer")
+                .user(userResponse)
+                .message("OAuth login successful")
+                .build();
         }
         
         // Check if email already exists
@@ -185,7 +200,12 @@ public class AuthService {
         String token = tokenService.generateToken(savedUser);
         
         UserResponse userResponse = mapToUserResponse(savedUser);
-        return new AuthResponse(token, userResponse);
+        return AuthResponse.builder()
+            .token(token)
+            .tokenType("Bearer")
+            .user(userResponse)
+            .message("OAuth registration successful")
+            .build();
     }
 
     /**
@@ -250,13 +270,16 @@ public class AuthService {
      * @return UserResponse
      */
     private UserResponse mapToUserResponse(User user) {
-        return new UserResponse(
-            user.getUserId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getUserType(),
-            user.getStatus().toString(),
-            user.getCreatedAt()
-        );
+        return UserResponse.builder()
+            .userId(user.getUserId())
+            .username(user.getUsername())
+            .email(user.getEmail())
+            .firstName(user.getFirstName())
+            .lastName(user.getLastName())
+            .profilePictureUrl(user.getProfilePictureUrl())
+            .userType(user.getUserType())
+            .status(user.getStatus())
+            .createdAt(user.getCreatedAt())
+            .build();
     }
 }
