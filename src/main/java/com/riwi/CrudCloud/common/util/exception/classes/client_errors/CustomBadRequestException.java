@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.database.exception;
+package com.riwi.CrudCloud.common.util.exception.classes.client_errors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

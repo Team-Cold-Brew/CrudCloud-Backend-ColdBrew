@@ -9,7 +9,7 @@ import lombok.Data;
  * DTO para la solicitud de creación de una nueva base de datos.
  */
 @Data
-public class DatabaseCreateRequest { // Renombrado de InstanceCreateRequest
+public class DatabaseCreateRequest {
 
     @Size(min = 3, max = 100, message = "The name must be between 3 and 100 characters long.")
     private String name;
@@ -18,7 +18,7 @@ public class DatabaseCreateRequest { // Renombrado de InstanceCreateRequest
     private DbType dbType;
 
     @NotNull(message = "The creator user ID is required.")
-    private Integer userId;
+    private Long userId;
 
     private Long organizationId;
 }

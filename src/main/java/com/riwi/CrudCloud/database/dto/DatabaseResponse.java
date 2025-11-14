@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class DatabaseResponse {
     private Long databaseId;
     private String name;
-    private Integer userId;
+    private Long userId;
     private Long organizationId;
     private DatabaseStatus status;
     private DbType dbType;

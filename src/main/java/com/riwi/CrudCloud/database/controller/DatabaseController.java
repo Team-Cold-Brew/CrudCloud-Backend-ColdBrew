@@ -16,18 +16,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/databases") // ¡CAMBIO! La ruta base ahora es '/databases'
+@RequestMapping("/databases")
 @RequiredArgsConstructor
-public class DatabaseController { // ¡CAMBIO! Renombrado de InstanceController
+public class DatabaseController {
 
-    private final DatabaseService databaseService; // Renombrado de instanceService
+    private final DatabaseService databaseService;
 
     /**
      * Creates a new database instance (DB inside a shared container).
      * Requires plan limit validation in the Service.
      */
     @PostMapping
-    public ResponseEntity<DatabaseResponse> createDatabase(@Valid @RequestBody DatabaseCreateRequest request) { // ¡CAMBIO de DTOs!
+    public ResponseEntity<DatabaseResponse> createDatabase(@Valid @RequestBody DatabaseCreateRequest request) {
         DatabaseResponse response = databaseService.createDatabase(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -37,14 +37,14 @@ public class DatabaseController { // ¡CAMBIO! Renombrado de InstanceController
      * Lists all active databases for a user.
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<DatabaseResponse>> listUserDatabases(@PathVariable Long userId) { // ¡CAMBIO de DTOs!
+    public ResponseEntity<List<DatabaseResponse>> listUserDatabases(@PathVariable Long userId) {
         List<DatabaseResponse> databases = databaseService.getAllUserDatabases(userId);
         return ResponseEntity.ok(databases);
     }
 
 
     @GetMapping("/{databaseId}")
-    public ResponseEntity<DatabaseResponse> getDatabaseDetails(@PathVariable Long databaseId) { // ¡CAMBIO de DTOs!
+    public ResponseEntity<DatabaseResponse> getDatabaseDetails(@PathVariable Long databaseId) {
         DatabaseResponse response = databaseService.getDatabaseDetails(databaseId);
         return ResponseEntity.ok(response);
     }
@@ -54,7 +54,7 @@ public class DatabaseController { // ¡CAMBIO! Renombrado de InstanceController
      * Suspends a database (revokes user connection permissions).
      */
     @PatchMapping("/{databaseId}/suspend")
-    public ResponseEntity<DatabaseResponse> suspendDatabase(@PathVariable Long databaseId) { // ¡CAMBIO de DTOs y PathVariable!
+    public ResponseEntity<DatabaseResponse> suspendDatabase(@PathVariable Long databaseId) {
         DatabaseResponse response = databaseService.suspendDatabase(databaseId);
         return ResponseEntity.ok(response);
     }
@@ -63,7 +63,7 @@ public class DatabaseController { // ¡CAMBIO! Renombrado de InstanceController
      * Resumes a database (restores user connection permissions).
      */
     @PatchMapping("/{databaseId}/resume")
-    public ResponseEntity<DatabaseResponse> resumeDatabase(@PathVariable Long databaseId) { // ¡CAMBIO de DTOs y PathVariable!
+    public ResponseEntity<DatabaseResponse> resumeDatabase(@PathVariable Long databaseId) {
         DatabaseResponse response = databaseService.resumeDatabase(databaseId);
         return ResponseEntity.ok(response);
     }
@@ -72,7 +72,7 @@ public class DatabaseController { // ¡CAMBIO! Renombrado de InstanceController
      * Rotates the password for a database user.
      */
     @PatchMapping("/{databaseId}/rotate-password")
-    public ResponseEntity<DatabaseResponse> rotatePassword(@PathVariable Long databaseId) { // ¡CAMBIO de DTOs y PathVariable!
+    public ResponseEntity<DatabaseResponse> rotatePassword(@PathVariable Long databaseId) {
         DatabaseResponse response = databaseService.rotatePassword(databaseId);
         return ResponseEntity.ok(response);
     }
@@ -82,7 +82,7 @@ public class DatabaseController { // ¡CAMBIO! Renombrado de InstanceController
      * Deletes a database (drops DB and user in the container + soft delete).
      */
     @DeleteMapping("/{databaseId}")
-    public ResponseEntity<Void> deleteDatabase(@PathVariable Long databaseId) { // ¡CAMBIO de PathVariable!
+    public ResponseEntity<Void> deleteDatabase(@PathVariable Long databaseId) {
         databaseService.deleteDatabase(databaseId);
         return ResponseEntity.noContent().build();
     }
@@ -92,7 +92,7 @@ public class DatabaseController { // ¡CAMBIO! Renombrado de InstanceController
      * This action marks the database as "PDF downloaded" (can only be done once).
      */
     @GetMapping("/{databaseId}/credentials-pdf")
-    public ResponseEntity<ByteArrayResource> downloadCredentialsPdf(@PathVariable Long databaseId) { // ¡CAMBIO de PathVariable!
+    public ResponseEntity<ByteArrayResource> downloadCredentialsPdf(@PathVariable Long databaseId) {
 
         byte[] pdfBytes = databaseService.downloadCredentialsPdf(databaseId);
 
