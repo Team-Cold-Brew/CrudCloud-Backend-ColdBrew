@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @Getter
+@SuppressWarnings("unused")
 public class OAuthProviderConfig {
 
     // Google OAuth Configuration
