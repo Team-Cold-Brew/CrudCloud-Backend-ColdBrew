@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.riwi.CrudCloud.auth.dto.request.LoginRequest;
-import com.riwi.CrudCloud.auth.dto.request.OAuth2LoginRequest;
 import com.riwi.CrudCloud.auth.dto.request.RegisterRequest;
 import com.riwi.CrudCloud.auth.dto.response.AuthResponse;
 import com.riwi.CrudCloud.auth.dto.response.UserResponse;
@@ -55,29 +54,6 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         AuthResponse response = authService.login(loginRequest);
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     * OAuth login/register
-     * POST /api/auth/oauth/login
-     *
-     * @param oauthRequest the OAuth login request
-     * @param providerUserId the user ID from OAuth provider
-     * @param providerEmail the email from OAuth provider
-     * @param providerName the name from OAuth provider
-     * @param profilePictureUrl the profile picture URL from OAuth provider
-     * @return ResponseEntity with AuthResponse
-     */
-    @PostMapping("/oauth/login")
-    public ResponseEntity<AuthResponse> oauthLogin(
-            @Valid @RequestBody OAuth2LoginRequest oauthRequest,
-            @RequestParam String providerUserId,
-            @RequestParam String providerEmail,
-            @RequestParam(required = false) String providerName,
-            @RequestParam(required = false) String profilePictureUrl) {
-        AuthResponse response = authService.oauthLogin(oauthRequest, providerUserId, 
-                providerEmail, providerName, profilePictureUrl);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
