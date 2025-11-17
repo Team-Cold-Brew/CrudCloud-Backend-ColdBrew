@@ -1,18 +1,12 @@
 package com.riwi.CrudCloud.common.util.exception;
 
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.*;
+import com.riwi.CrudCloud.common.util.exception.classes.server_errors.DatabaseManagementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.AccountLinkingException;
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.AuthException;
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ConflictException;
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ForbiddenException;
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.OAuthException;
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ResourceNotFoundException;
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.UnauthorizedException;
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.UnprocessableEntityException;
 import com.riwi.CrudCloud.common.util.exception.dto.ErrorResponse;
 import com.riwi.CrudCloud.common.util.exception.handlers.client_errors.AuthenticationExceptionHandler;
 import com.riwi.CrudCloud.common.util.exception.handlers.client_errors.BusinessLogicExceptionHandler;
@@ -145,4 +139,34 @@ public class GlobalExceptionHandler {
         log.error("Routing generic Exception to SystemExceptionHandler", ex);
         return systemHandler.handleGlobalException(ex);
     }
+
+    /**
+     * Route CustomNotFoundException to the appropriate handler (404 Not Found)
+     */
+    @ExceptionHandler(CustomNotFoundException.class)
+    public ResponseEntity<ErrorResponse> routeCustomNotFound(CustomNotFoundException ex) {
+        log.debug("Routing CustomNotFoundException (404) to ResourceExceptionHandler");
+        // Creamos un ResourceNotFoundException con el mismo mensaje para delegar al handler especializado.
+        return resourceHandler.handleResourceNotFoundException(new ResourceNotFoundException(ex.getMessage()));
+    }
+
+    /**
+     * Route CustomBadRequestException to the appropriate handler (400 Bad Request)
+     */
+    @ExceptionHandler(CustomBadRequestException.class)
+    public ResponseEntity<ErrorResponse> routeCustomBadRequest(CustomBadRequestException ex) {
+        log.debug("Routing CustomBadRequestException (400) to BusinessLogicExceptionHandler");
+        return businessLogicHandler.handleConflictException(new ConflictException(ex.getMessage()));
+
+    }
+
+    /**
+     * Route DatabaseManagementException to SystemExceptionHandler (500 Internal Server Error)
+     */
+    @ExceptionHandler(DatabaseManagementException.class)
+    public ResponseEntity<ErrorResponse> routeDatabaseManagementException(DatabaseManagementException ex) {
+        log.error("Routing DatabaseManagementException (500) to SystemExceptionHandler", ex);
+        return systemHandler.handleGlobalException(ex);
+    }
+
 }
