@@ -19,13 +19,13 @@ CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NULLABLE,
-    first_name VARCHAR(100) NULLABLE,
-    last_name VARCHAR(100) NULLABLE,
-    profile_picture_url VARCHAR(500) NULLABLE,
-    google_id VARCHAR(255) UNIQUE NULLABLE,
-    github_id VARCHAR(255) UNIQUE NULLABLE,
-    oauth_provider VARCHAR(20) NULLABLE,
+    password VARCHAR(255),
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    profile_picture_url VARCHAR(500),
+    google_id VARCHAR(255) UNIQUE,
+    github_id VARCHAR(255) UNIQUE,
+    oauth_provider VARCHAR(20),
     user_type VARCHAR(20) NOT NULL DEFAULT 'INDIVIDUAL' CHECK (user_type IN ('INDIVIDUAL', 'ORGANIZATIONAL_USER')),
     personal_plan_id INT,
     status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')),
@@ -41,14 +41,13 @@ CREATE TABLE users (
 CREATE TABLE user_oauth_providers (
     provider_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
-    provider VARCHAR(50) NOT NULL COMMENT 'GOOGLE or GITHUB',
+    provider VARCHAR(50) NOT NULL, -- 'GOOGLE' or 'GITHUB'
     provider_user_id VARCHAR(255) NOT NULL UNIQUE,
     provider_email VARCHAR(255),
     provider_name VARCHAR(255),
     linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    UNIQUE KEY uk_user_provider (user_id, provider),
-    INDEX idx_provider_user_id (provider_user_id)
+    UNIQUE (user_id, provider)
 );
 
 -- ==========================================
@@ -228,7 +227,7 @@ CREATE INDEX idx_database_org_status ON database(organization_id, status, delete
 CREATE INDEX idx_database_user_status ON database(user_id, status, deleted_at);
 
 -- Composite index for port allocation queries (avoid duplicates)
-CREATE INDEX idx_database_port_host ON database(port, host) WHERE status != 'DELETED' AND deleted_at IS NULL;
+CREATE INDEX idx_database_port_host ON database(port, host) WHERE status <> 'DELETED' AND deleted_at IS NULL;
 
 -- Composite index for container lookup
 CREATE INDEX idx_database_container_id ON database(container_id) WHERE deleted_at IS NULL;
