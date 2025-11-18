@@ -1,26 +1,41 @@
 package com.riwi.CrudCloud.database.controller;
 
-import com.riwi.CrudCloud.common.models.DbType;
-import com.riwi.CrudCloud.database.dto.DatabaseCreateRequest;
-import com.riwi.CrudCloud.database.dto.DatabaseResponse;
-import com.riwi.CrudCloud.database.service.DatabaseService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.riwi.CrudCloud.auth.service.PlanService;
+import com.riwi.CrudCloud.common.models.DbType;
+import com.riwi.CrudCloud.database.config.EngineProviderConfig;
+import com.riwi.CrudCloud.database.dto.DatabaseCreateRequest;
+import com.riwi.CrudCloud.database.dto.DatabaseResponse;
+import com.riwi.CrudCloud.database.dto.response.EngineAvailabilityResponse;
+import com.riwi.CrudCloud.database.service.DatabaseService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/databases")
+@RequestMapping("/api/v1/instances")
 @RequiredArgsConstructor
 public class DatabaseController {
 
     private final DatabaseService databaseService;
+    private final EngineProviderConfig engineProviderConfig;
+    private final PlanService planService;
 
     /**
      * Creates a new database instance (DB inside a shared container).
@@ -114,5 +129,35 @@ public class DatabaseController {
     @GetMapping("/catalog")
     public ResponseEntity<DbType[]> getAvailableDatabases() {
         return ResponseEntity.ok(DbType.values());
+    }
+
+    /**
+     * Get engine availability considering provider config and user plan limits.
+     * GET /api/v1/instances/available-engines
+     *
+     * @return ResponseEntity with list of EngineAvailabilityResponse
+     */
+    @GetMapping("/available-engines")
+    public ResponseEntity<List<EngineAvailabilityResponse>> getAvailableEngines() {
+        List<EngineAvailabilityResponse> engines = new ArrayList<>();
+
+        for (DbType engine : DbType.values()) {
+            boolean isAvailable = true;
+            String reason = null;
+
+            // Check 1: Is this engine configured by the provider?
+            if (!engineProviderConfig.isEngineAvailable(engine)) {
+                isAvailable = false;
+                reason = "This engine is not configured";
+            }
+
+            engines.add(new EngineAvailabilityResponse(
+                engine.name(),
+                isAvailable,
+                reason
+            ));
+        }
+
+        return ResponseEntity.ok(engines);
     }
 }

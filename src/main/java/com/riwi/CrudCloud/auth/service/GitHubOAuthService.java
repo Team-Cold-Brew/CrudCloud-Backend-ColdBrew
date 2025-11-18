@@ -1,12 +1,8 @@
 package com.riwi.CrudCloud.auth.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.riwi.CrudCloud.auth.config.OAuthProviderConfig;
-import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
-import com.riwi.CrudCloud.auth.dto.response.OAuth2TokenResponse;
-import com.riwi.CrudCloud.common.util.exception.classes.client_errors.OAuthException;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,8 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.riwi.CrudCloud.auth.config.OAuthProviderConfig;
+import com.riwi.CrudCloud.auth.dto.response.OAuth2TokenResponse;
+import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
+import com.riwi.CrudCloud.common.util.exception.classes.client_errors.OAuthException;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * GitHub OAuth Service Implementation
@@ -34,6 +36,27 @@ public class GitHubOAuthService implements OAuthService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Override
+    public String getAuthorizationUrl(String redirectUri) {
+        log.debug("Generating GitHub OAuth authorization URL");
+
+        String clientId = oauthConfig.getGithubClientId();
+        String authorizationUri = oauthConfig.getGithubAuthorizationUri();
+        String scopes = oauthConfig.getGithubScopes();
+        
+        // Build authorization URL with proper URL encoding
+        String authUrl = String.format(
+            "%s?client_id=%s&redirect_uri=%s&scope=%s&response_type=code",
+            authorizationUri,
+            clientId,
+            java.net.URLEncoder.encode(redirectUri, java.nio.charset.StandardCharsets.UTF_8),
+            java.net.URLEncoder.encode(scopes, java.nio.charset.StandardCharsets.UTF_8)
+        );
+        
+        log.debug("Generated authorization URL for GitHub OAuth");
+        return authUrl;
+    }
 
     @Override
     public OAuth2TokenResponse exchangeCodeForToken(String code) {

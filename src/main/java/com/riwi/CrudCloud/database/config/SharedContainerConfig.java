@@ -1,20 +1,20 @@
 package com.riwi.CrudCloud.database.config;
 
-import com.riwi.CrudCloud.common.models.DbType;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import com.riwi.CrudCloud.common.models.DbType;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Configuration for managing pre-existing shared containers.
  * * Reads the configuration from application.properties (prefix shared.container).
  * * Contains the INTERNAL HOST (Docker Network Name) and administrator credentials.
  */
-@Component
 @ConfigurationProperties("shared.container")
 @Getter
 @Setter

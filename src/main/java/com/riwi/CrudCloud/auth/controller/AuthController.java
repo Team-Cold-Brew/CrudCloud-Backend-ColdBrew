@@ -23,7 +23,7 @@ import jakarta.validation.Valid;
  * Controller for authentication endpoints
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
 

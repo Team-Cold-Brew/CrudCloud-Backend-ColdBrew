@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.riwi.CrudCloud.auth.dto.request.OAuthCallbackRequest;
@@ -19,9 +21,9 @@ import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
 import com.riwi.CrudCloud.auth.service.GitHubOAuthService;
 import com.riwi.CrudCloud.auth.service.GoogleOAuthService;
 import com.riwi.CrudCloud.auth.service.OAuthUserProcessorService;
+import com.riwi.CrudCloud.common.models.OAuthProvider;
 import com.riwi.CrudCloud.common.util.exception.classes.client_errors.AccountLinkingException;
 import com.riwi.CrudCloud.common.util.exception.classes.client_errors.OAuthException;
-import com.riwi.CrudCloud.common.models.OAuthProvider;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
  * Handles Google and GitHub OAuth callback flows
  */
 @RestController
-@RequestMapping("/api/auth/oauth")
+@RequestMapping("/api/v1/auth/oauth")
 @CrossOrigin(origins = "*")
 @Slf4j
 public class OAuthController {
@@ -44,6 +46,49 @@ public class OAuthController {
 
     @Autowired
     private OAuthUserProcessorService oauthUserProcessorService;
+
+    /**
+     * Initiate OAuth flow - returns authorization URL
+     * GET /api/v1/auth/oauth/authorize/{provider}
+     *
+     * @param provider the OAuth provider (google or github)
+     * @param redirectUri the redirect URI for OAuth callback
+     * @return ResponseEntity with authorization URL to redirect to
+     */
+    @GetMapping("/authorize/{provider}")
+    public ResponseEntity<?> authorizeOAuth(
+            @PathVariable String provider,
+            @RequestParam String redirectUri) {
+
+        log.info("OAuth authorization initiated: provider={}", provider);
+
+        try {
+            OAuthProvider oauthProvider = OAuthProvider.fromValue(provider);
+
+            String authorizationUrl = switch (oauthProvider) {
+                case GOOGLE -> googleOAuthService.getAuthorizationUrl(redirectUri);
+                case GITHUB -> githubOAuthService.getAuthorizationUrl(redirectUri);
+                default -> throw new OAuthException("INVALID_PROVIDER", "Unsupported OAuth provider: " + provider);
+            };
+
+            return ResponseEntity.ok(Map.of(
+                "authorizationUrl", authorizationUrl
+            ));
+
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid OAuth provider: {}", provider);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", "INVALID_PROVIDER",
+                "message", "Unsupported OAuth provider: " + provider
+            ));
+        } catch (Exception e) {
+            log.error("Error generating authorization URL", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "AUTHORIZATION_URL_GENERATION_FAILED",
+                "message", "Failed to generate authorization URL"
+            ));
+        }
+    }
 
     /**
      * OAuth login endpoint
