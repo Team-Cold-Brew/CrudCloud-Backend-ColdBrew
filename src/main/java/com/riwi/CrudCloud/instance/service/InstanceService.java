@@ -11,8 +11,8 @@ import com.riwi.CrudCloud.instance.dto.InstanceResponse;
 import com.riwi.CrudCloud.instance.model.Instance;
 import com.riwi.CrudCloud.instance.model.ENUM.DbType;
 import com.riwi.CrudCloud.instance.model.ENUM.InstanceStatus;
-import com.riwi.CrudCloud.instance.model.Plan;
-import com.riwi.CrudCloud.instance.model.User;
+import com.riwi.CrudCloud.common.models.Plan;
+import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.instance.repository.InstanceRepository;
 import com.riwi.CrudCloud.instance.repository.PlanRepositoryByInstance;
 import com.riwi.CrudCloud.instance.repository.UserRepositoryByIntance;
@@ -57,8 +57,8 @@ public class InstanceService {
             currentCount = instanceRepository.countActiveByUserId(userId);
         }
 
-        if (currentCount >= plan.getMaxInstances()) {
-            throw new CustomBadRequestException("Instance limit reached. Your plan (" + plan.getName() + ") allows up to " + plan.getMaxInstances() + " instances.");
+        if (currentCount >= plan.getMaxDatabases()) {
+            throw new CustomBadRequestException("Instance limit reached. Your plan (" + plan.getName() + ") allows up to " + plan.getMaxDatabases() + " instances.");
         }
     }
 
@@ -75,8 +75,11 @@ public class InstanceService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new CustomNotFoundException("User not found."));
 
-        Plan plan = planRepository.findById(user.getPersonalPlanId())
-                .orElseThrow(() -> new CustomNotFoundException("Plan not found for the user."));
+        if (user.getPersonalPlan() == null) {
+            throw new CustomNotFoundException("User does not have an assigned plan.");
+        }
+
+        Plan plan = user.getPersonalPlan();
 
         validateInstanceLimit(request.getUserId(), request.getOrganizationId(), plan);
 

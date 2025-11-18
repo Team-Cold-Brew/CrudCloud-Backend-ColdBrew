@@ -1,4 +1,4 @@
-package com.riwi.CrudCloud.mercadoPago.util.exception.classes;
+package com.riwi.CrudCloud.common.util.exception.classes.payment;
 
 /**
  * Exception thrown when a payment or transaction is not found

@@ -1,7 +1,7 @@
 package com.riwi.CrudCloud.instance.repository;
 
 
-import com.riwi.CrudCloud.instance.model.Plan;
+import com.riwi.CrudCloud.common.models.Plan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

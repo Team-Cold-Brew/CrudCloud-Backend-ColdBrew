@@ -19,13 +19,13 @@ CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NULLABLE,
-    first_name VARCHAR(100) NULLABLE,
-    last_name VARCHAR(100) NULLABLE,
-    profile_picture_url VARCHAR(500) NULLABLE,
-    google_id VARCHAR(255) UNIQUE NULLABLE,
-    github_id VARCHAR(255) UNIQUE NULLABLE,
-    oauth_provider VARCHAR(20) NULLABLE,
+    password VARCHAR(255) NULL,
+    first_name VARCHAR(100) NULL,
+    last_name VARCHAR(100) NULL,
+    profile_picture_url VARCHAR(500) NULL,
+    google_id VARCHAR(255) UNIQUE NULL,
+    github_id VARCHAR(255) UNIQUE NULL,
+    oauth_provider VARCHAR(20) NULL,
     user_type VARCHAR(20) NOT NULL DEFAULT 'INDIVIDUAL' CHECK (user_type IN ('INDIVIDUAL', 'ORGANIZATIONAL_USER')),
     personal_plan_id INT,
     status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')),
@@ -33,22 +33,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP,
     FOREIGN KEY (personal_plan_id) REFERENCES plan(plan_id) ON DELETE SET NULL
-);
-
--- ==========================================
--- USER_OAUTH_PROVIDERS (Tracking multiple OAuth providers per user)
--- ==========================================
-CREATE TABLE user_oauth_providers (
-    provider_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    provider VARCHAR(50) NOT NULL COMMENT 'GOOGLE or GITHUB',
-    provider_user_id VARCHAR(255) NOT NULL UNIQUE,
-    provider_email VARCHAR(255),
-    provider_name VARCHAR(255),
-    linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    UNIQUE KEY uk_user_provider (user_id, provider),
-    INDEX idx_provider_user_id (provider_user_id)
 );
 
 -- ==========================================
@@ -77,6 +61,21 @@ CREATE TABLE organization_members (
     FOREIGN KEY (organization_id) REFERENCES organization(organization_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     UNIQUE (organization_id, user_id)
+);
+
+-- ==========================================
+-- USER_OAUTH_PROVIDERS (Track multiple OAuth providers per user)
+-- ==========================================
+CREATE TABLE user_oauth_providers (
+    provider_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    provider VARCHAR(50) NOT NULL COMMENT 'GOOGLE or GITHUB',
+    provider_user_id VARCHAR(255) NOT NULL UNIQUE,
+    provider_email VARCHAR(255) NULL,
+    provider_name VARCHAR(255) NULL,
+    linked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    UNIQUE (user_id, provider)
 );
 
 -- ==========================================
@@ -168,16 +167,10 @@ CREATE INDEX idx_users_type_status ON users(user_type, status) WHERE deleted_at 
 -- Index for plan queries (users with specific personal plan)
 CREATE INDEX idx_users_personal_plan_id ON users(personal_plan_id);
 
--- ========== OAUTH INDEXES ==========
--- Index for OAuth lookups
-CREATE INDEX idx_google_id ON users(google_id);
-CREATE INDEX idx_github_id ON users(github_id);
-CREATE INDEX idx_oauth_provider ON users(oauth_provider);
-
--- Indexes for user_oauth_providers table
-CREATE INDEX idx_user_oauth_providers_user_id ON user_oauth_providers(user_id);
-CREATE INDEX idx_user_oauth_providers_provider ON user_oauth_providers(provider);
-CREATE INDEX idx_user_oauth_providers_linked_at ON user_oauth_providers(linked_at);
+-- OAuth indexes for provider lookups
+CREATE INDEX idx_users_google_id ON users(google_id);
+CREATE INDEX idx_users_github_id ON users(github_id);
+CREATE INDEX idx_users_oauth_provider ON users(oauth_provider);
 
 -- ========== ORGANIZATION INDEXES ==========
 -- Index for soft delete queries
@@ -276,3 +269,13 @@ CREATE INDEX idx_payment_providers_active ON payment_providers(active);
 -- ========== CURRENCY INDEXES ==========
 -- Index for finding currency by code
 CREATE INDEX idx_currency_code ON currency(currency);
+
+-- ========== USER_OAUTH_PROVIDERS INDEXES ==========
+-- Index for finding OAuth providers by provider user ID
+CREATE INDEX idx_user_oauth_providers_provider_user_id ON user_oauth_providers(provider_user_id);
+
+-- Index for finding all OAuth providers linked to a user
+CREATE INDEX idx_user_oauth_providers_user_id ON user_oauth_providers(user_id);
+
+-- Index for finding OAuth providers by provider type
+CREATE INDEX idx_user_oauth_providers_provider ON user_oauth_providers(provider);
