@@ -25,7 +25,10 @@ import com.riwi.CrudCloud.common.models.Plan;
 import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.common.util.exception.classes.client_errors.BadRequestException;
 import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ResourceNotFoundException;
+import com.riwi.CrudCloud.common.util.exception.classes.payment.CheckoutCreationException;
+import com.riwi.CrudCloud.common.util.exception.classes.payment.InvalidPaymentDataException;
 import com.riwi.CrudCloud.common.util.exception.classes.payment.MercadoPagoException;
+import com.riwi.CrudCloud.common.util.exception.classes.payment.PreferenceNotFoundException;
 import com.riwi.CrudCloud.mercadoPago.dto.request.CheckoutRequest;
 import com.riwi.CrudCloud.mercadoPago.dto.response.CheckoutResponse;
 import com.riwi.CrudCloud.mercadoPago.model.PaymentPreference;
@@ -87,16 +90,17 @@ public class MercadoPagoService {
             throw new BadRequestException("Quantity must be greater than 0");
         }
 
+        // Generate external reference if not provided
+        String externalReference = request.getExternalReference() != null 
+            ? request.getExternalReference() 
+            : "PLAN-" + plan.getPlanId() + "-USER-" + user.getUserId() + "-" + UUID.randomUUID().toString().substring(0, 8);
+
         try {
-            // Generate external reference if not provided
-            String externalReference = request.getExternalReference() != null 
-                ? request.getExternalReference() 
-                : "PLAN-" + plan.getPlanId() + "-USER-" + user.getUserId() + "-" + UUID.randomUUID().toString().substring(0, 8);
 
             // Validate and format price
             java.math.BigDecimal unitPrice = plan.getPrice();
             if (unitPrice == null || unitPrice.compareTo(java.math.BigDecimal.ZERO) <= 0) {
-                throw new BadRequestException("Plan price must be greater than 0");
+                throw InvalidPaymentDataException.withField("price", unitPrice, "must be greater than 0");
             }
             unitPrice = unitPrice.setScale(2, java.math.RoundingMode.HALF_UP);
             
@@ -170,10 +174,20 @@ public class MercadoPagoService {
 
         } catch (MPApiException e) {
             log.error("MercadoPago API error: {} - {}", e.getStatusCode(), e.getApiResponse().getContent(), e);
-            throw new MercadoPagoException("MercadoPago API error: " + e.getApiResponse().getContent());
+            throw new MercadoPagoException(
+                "Failed to create checkout preference",
+                String.valueOf(e.getStatusCode()),
+                e.getApiResponse().getContent(),
+                e.getStatusCode()
+            );
         } catch (MPException e) {
             log.error("MercadoPago SDK error: {}", e.getMessage(), e);
-            throw new MercadoPagoException("MercadoPago SDK error: " + e.getMessage());
+            throw new CheckoutCreationException(
+                "MercadoPago SDK error: " + e.getMessage(),
+                user.getUserId().toString(),
+                plan.getPlanId().toString(),
+                externalReference
+            );
         }
     }
 
@@ -182,12 +196,12 @@ public class MercadoPagoService {
      *
      * @param preferenceId the MercadoPago preference ID
      * @return PaymentPreference
-     * @throws ResourceNotFoundException if preference not found
+     * @throws PreferenceNotFoundException if preference not found
      */
     @Transactional(readOnly = true)
     public PaymentPreference getPreferenceById(String preferenceId) {
         return preferenceRepository.findByMercadopagoPreferenceId(preferenceId)
-            .orElseThrow(() -> new ResourceNotFoundException("Preference not found with ID: " + preferenceId));
+            .orElseThrow(() -> PreferenceNotFoundException.withPreferenceId(preferenceId));
     }
 
     /**

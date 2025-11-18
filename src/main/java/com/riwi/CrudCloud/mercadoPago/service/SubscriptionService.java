@@ -14,6 +14,8 @@ import com.riwi.CrudCloud.common.models.Subscription;
 import com.riwi.CrudCloud.common.models.SubscriptionStatus;
 import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ResourceNotFoundException;
+import com.riwi.CrudCloud.common.util.exception.classes.payment.SubscriptionException;
+import com.riwi.CrudCloud.common.util.exception.classes.payment.SubscriptionNotFoundException;
 import com.riwi.CrudCloud.mercadoPago.dto.response.SubscriptionResponse;
 import com.riwi.CrudCloud.mercadoPago.repository.SubscriptionRepository;
 
@@ -100,12 +102,12 @@ public class SubscriptionService {
      *
      * @param subscriptionId the subscription ID
      * @return SubscriptionResponse
-     * @throws ResourceNotFoundException if subscription not found
+     * @throws SubscriptionNotFoundException if subscription not found
      */
     @Transactional(readOnly = true)
     public SubscriptionResponse getSubscriptionById(Long subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-            .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with ID: " + subscriptionId));
+            .orElseThrow(() -> SubscriptionNotFoundException.withSubscriptionId(subscriptionId.toString()));
 
         return mapToSubscriptionResponse(subscription);
     }
@@ -129,12 +131,12 @@ public class SubscriptionService {
      *
      * @param userId the user ID
      * @return SubscriptionResponse
-     * @throws ResourceNotFoundException if no active subscription found
+     * @throws SubscriptionNotFoundException if no active subscription found
      */
     @Transactional(readOnly = true)
     public SubscriptionResponse getActiveSubscriptionByUserId(Integer userId) {
         Subscription subscription = subscriptionRepository.findActiveSubscriptionByUserId(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("No active subscription found for user ID: " + userId));
+            .orElseThrow(() -> SubscriptionNotFoundException.forUser(userId.toString()));
 
         return mapToSubscriptionResponse(subscription);
     }
@@ -144,14 +146,14 @@ public class SubscriptionService {
      *
      * @param subscriptionId the subscription ID
      * @return SubscriptionResponse
-     * @throws ResourceNotFoundException if subscription not found
+     * @throws SubscriptionNotFoundException if subscription not found
      */
     @Transactional
     public SubscriptionResponse cancelSubscription(Long subscriptionId) {
         log.info("Cancelling subscription {}", subscriptionId);
 
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
-            .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with ID: " + subscriptionId));
+            .orElseThrow(() -> SubscriptionNotFoundException.withSubscriptionId(subscriptionId.toString()));
 
         subscription.cancel();
         subscriptionRepository.save(subscription);

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.riwi.CrudCloud.common.util.exception.classes.payment.WebhookValidationException;
 import com.riwi.CrudCloud.mercadoPago.dto.request.WebhookRequest;
 
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,11 @@ public class WebhookService {
 
         if (paymentId == null) {
             log.error("Payment webhook has no payment ID");
-            return;
+            throw new WebhookValidationException(
+                "Payment webhook missing payment ID",
+                webhookRequest.getType(),
+                String.valueOf(webhookRequest.getData())
+            );
         }
 
         log.info("Processing payment webhook: action={}, paymentId={}", action, paymentId);

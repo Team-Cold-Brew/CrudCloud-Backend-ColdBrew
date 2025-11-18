@@ -18,8 +18,11 @@ import com.riwi.CrudCloud.common.models.PaymentStatus;
 import com.riwi.CrudCloud.common.models.Plan;
 import com.riwi.CrudCloud.common.models.User;
 import com.riwi.CrudCloud.common.util.exception.classes.client_errors.ResourceNotFoundException;
+import com.riwi.CrudCloud.common.util.exception.classes.payment.DuplicatePaymentException;
+import com.riwi.CrudCloud.common.util.exception.classes.payment.InvalidPaymentDataException;
 import com.riwi.CrudCloud.common.util.exception.classes.payment.MercadoPagoException;
 import com.riwi.CrudCloud.common.util.exception.classes.payment.PaymentNotFoundException;
+import com.riwi.CrudCloud.common.util.exception.classes.payment.PaymentProcessingException;
 import com.riwi.CrudCloud.mercadoPago.dto.response.PaymentResponse;
 import com.riwi.CrudCloud.mercadoPago.repository.PaymentRepository;
 
@@ -58,8 +61,7 @@ public class PaymentService {
             // Check if payment already exists
             if (paymentRepository.existsByMercadopagoPaymentId(paymentId)) {
                 log.info("Payment {} already processed, updating status", paymentId);
-                updatePaymentStatus(paymentId);
-                return;
+                throw DuplicatePaymentException.alreadyProcessed(paymentId);
             }
 
             // Get payment details from MercadoPago
@@ -73,14 +75,15 @@ public class PaymentService {
             String externalReference = mpPayment.getExternalReference();
             if (externalReference == null) {
                 log.error("Payment {} has no external reference", paymentId);
-                throw new MercadoPagoException("Payment has no external reference");
+                throw InvalidPaymentDataException.withField("externalReference", null, "is required");
             }
 
             // Parse external reference (format: PLAN-{planId}-USER-{userId}-{uuid})
             String[] parts = externalReference.split("-");
             if (parts.length < 4) {
                 log.error("Invalid external reference format: {}", externalReference);
-                throw new MercadoPagoException("Invalid external reference format");
+                throw InvalidPaymentDataException.withField("externalReference", externalReference, 
+                    "invalid format, expected: PLAN-{planId}-USER-{userId}-{uuid}");
             }
 
             Integer planId = Integer.parseInt(parts[1]);
@@ -128,13 +131,22 @@ public class PaymentService {
         } catch (MPApiException e) {
             log.error("MercadoPago API error processing payment {}: {} - {}", 
                 paymentId, e.getStatusCode(), e.getApiResponse().getContent(), e);
-            throw new MercadoPagoException("MercadoPago API error: " + e.getApiResponse().getContent());
+            throw new MercadoPagoException(
+                "Failed to retrieve payment details",
+                String.valueOf(e.getStatusCode()),
+                e.getApiResponse().getContent(),
+                e.getStatusCode()
+            );
         } catch (MPException e) {
             log.error("MercadoPago SDK error processing payment {}: {}", paymentId, e.getMessage(), e);
-            throw new MercadoPagoException("MercadoPago SDK error: " + e.getMessage());
+            throw new PaymentProcessingException(
+                "MercadoPago SDK error: " + e.getMessage(),
+                paymentId,
+                "UNKNOWN"
+            );
         } catch (NumberFormatException e) {
             log.error("Invalid payment ID format: {}", paymentId, e);
-            throw new MercadoPagoException("Invalid payment ID format");
+            throw InvalidPaymentDataException.withField("paymentId", paymentId, "must be a valid number");
         }
     }
 
@@ -196,7 +208,7 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public PaymentResponse getPaymentById(Long paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
-            .orElseThrow(() -> new PaymentNotFoundException("Payment not found with ID: " + paymentId));
+            .orElseThrow(() -> PaymentNotFoundException.withPaymentId(paymentId.toString()));
 
         return mapToPaymentResponse(payment);
     }
@@ -211,7 +223,7 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public PaymentResponse getPaymentByMercadoPagoId(String mercadopagoPaymentId) {
         Payment payment = paymentRepository.findByMercadopagoPaymentId(mercadopagoPaymentId)
-            .orElseThrow(() -> new PaymentNotFoundException("Payment not found with MercadoPago ID: " + mercadopagoPaymentId));
+            .orElseThrow(() -> PaymentNotFoundException.withPaymentId(mercadopagoPaymentId));
 
         return mapToPaymentResponse(payment);
     }
