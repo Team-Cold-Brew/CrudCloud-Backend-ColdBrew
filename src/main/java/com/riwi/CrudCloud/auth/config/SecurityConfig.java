@@ -74,6 +74,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/oauth/callback/**").permitAll()
                 // Public endpoints - Webhooks
                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
+                // MercadoPago webhooks (PUBLIC - MercadoPago will call these)
+                .requestMatchers("/api/webhooks/mercadopago/**").permitAll()
+                // MercadoPago endpoints (REQUIRE AUTHENTICATION)
+                .requestMatchers("/api/payments/**").authenticated()
+                .requestMatchers("/api/subscriptions/**").authenticated()
                 // Health check
                 .requestMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
                 // All other endpoints require authentication

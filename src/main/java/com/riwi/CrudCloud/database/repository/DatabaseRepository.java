@@ -4,6 +4,7 @@ import com.riwi.CrudCloud.common.models.Database;
 import com.riwi.CrudCloud.common.models.DbType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -35,7 +36,8 @@ public interface DatabaseRepository extends JpaRepository<Database, Long> {
      * @param userId ID del usuario.
      * @return Lista de bases de datos.
      */
-    List<Database> findByUserIdAndDeletedAtIsNull(Long userId);
+    @Query("SELECT d FROM Database d WHERE d.user.userId = :userId AND d.deletedAt IS NULL")
+    List<Database> findByUserIdAndDeletedAtIsNull(@Param("userId") Long userId);
 
     /**
      * Busca una base de datos por el puerto asignado y que no haya sido borrada lógicamente.

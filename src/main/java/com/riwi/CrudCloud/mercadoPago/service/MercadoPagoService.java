@@ -1,6 +1,5 @@
 package com.riwi.CrudCloud.mercadoPago.service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -94,6 +93,15 @@ public class MercadoPagoService {
                 ? request.getExternalReference() 
                 : "PLAN-" + plan.getPlanId() + "-USER-" + user.getUserId() + "-" + UUID.randomUUID().toString().substring(0, 8);
 
+            // Validate and format price
+            java.math.BigDecimal unitPrice = plan.getPrice();
+            if (unitPrice == null || unitPrice.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                throw new BadRequestException("Plan price must be greater than 0");
+            }
+            unitPrice = unitPrice.setScale(2, java.math.RoundingMode.HALF_UP);
+            
+            log.debug("Creating preference with price: {} ARS", unitPrice);
+
             // Create preference item
             PreferenceItemRequest item = PreferenceItemRequest.builder()
                 .id(plan.getPlanId().toString())
@@ -102,7 +110,7 @@ public class MercadoPagoService {
                 .categoryId("services")
                 .quantity(quantity)
                 .currencyId("ARS")
-                .unitPrice(plan.getPrice())
+                .unitPrice(unitPrice)
                 .build();
 
             List<PreferenceItemRequest> items = new ArrayList<>();
@@ -119,11 +127,9 @@ public class MercadoPagoService {
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                 .items(items)
                 .backUrls(backUrls)
-                .autoReturn("approved")
                 .externalReference(externalReference)
                 .notificationUrl(notificationUrl)
                 .statementDescriptor("CrudCloud - " + plan.getName())
-                .expirationDateTo(OffsetDateTime.now(ZoneOffset.UTC).plusDays(1))
                 .build();
 
             // Create preference using MercadoPago SDK
