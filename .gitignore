@@ -25,10 +25,10 @@ application.properties
 hs_err_pid*
 replay_pid*
 
-
-
+/.idea
 public
 docs
 target
 src/main/resources/application.properties
 application.properties
+.vscode
