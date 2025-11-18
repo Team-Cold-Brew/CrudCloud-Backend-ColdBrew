@@ -1,13 +1,14 @@
 package com.riwi.CrudCloud.database.repository;
 
-import com.riwi.CrudCloud.common.models.Database;
-import com.riwi.CrudCloud.common.models.DbType;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.riwi.CrudCloud.common.models.Database;
+import com.riwi.CrudCloud.common.models.DbType;
 
 @Repository
 public interface DatabaseRepository extends JpaRepository<Database, Long> {
@@ -35,6 +36,7 @@ public interface DatabaseRepository extends JpaRepository<Database, Long> {
      * @param userId ID del usuario.
      * @return Lista de bases de datos.
      */
+    @Query("SELECT d FROM Database d WHERE d.user.userId = :userId AND d.deletedAt IS NULL")
     List<Database> findByUserIdAndDeletedAtIsNull(Long userId);
 
     /**
