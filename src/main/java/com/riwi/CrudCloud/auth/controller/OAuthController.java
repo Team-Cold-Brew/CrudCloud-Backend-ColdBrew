@@ -19,9 +19,9 @@ import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
 import com.riwi.CrudCloud.auth.service.GitHubOAuthService;
 import com.riwi.CrudCloud.auth.service.GoogleOAuthService;
 import com.riwi.CrudCloud.auth.service.OAuthUserProcessorService;
+import com.riwi.CrudCloud.common.models.OAuthProvider;
 import com.riwi.CrudCloud.common.util.exception.classes.client_errors.AccountLinkingException;
 import com.riwi.CrudCloud.common.util.exception.classes.client_errors.OAuthException;
-import com.riwi.CrudCloud.common.models.OAuthProvider;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * Handles Google and GitHub OAuth callback flows
  */
 @RestController
-@RequestMapping("/api/auth/oauth")
+@RequestMapping("/api/v1/auth/oauth")
 @CrossOrigin(origins = "*")
 @Slf4j
 public class OAuthController {

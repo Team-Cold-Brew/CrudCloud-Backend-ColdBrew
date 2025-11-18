@@ -72,6 +72,8 @@ public class SecurityConfig {
                 // OAuth endpoints
                 .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/login-urls").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/oauth/callback/**").permitAll()
+                // Public endpoints - Plans (readable without auth)
+                .requestMatchers(HttpMethod.GET, "/api/v1/plans/**").permitAll()
                 // Public endpoints - Webhooks
                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                 // Health check
