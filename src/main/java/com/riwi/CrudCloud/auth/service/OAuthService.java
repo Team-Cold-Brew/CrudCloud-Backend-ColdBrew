@@ -1,13 +1,21 @@
 package com.riwi.CrudCloud.auth.service;
 
-import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
 import com.riwi.CrudCloud.auth.dto.response.OAuth2TokenResponse;
+import com.riwi.CrudCloud.auth.dto.response.OAuthUserResponse;
 
 /**
  * Interface for OAuth Service implementations
  * Defines contract for token exchange and user profile fetching
  */
 public interface OAuthService {
+    
+    /**
+     * Generate OAuth authorization URL for the provider
+     * 
+     * @param redirectUri the redirect URI for OAuth callback
+     * @return authorization URL to redirect user to
+     */
+    String getAuthorizationUrl(String redirectUri);
     
     /**
      * Exchange authorization code for access token
