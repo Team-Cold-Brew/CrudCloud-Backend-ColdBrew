@@ -287,7 +287,8 @@ public class DatabaseService {
     /**
      * Map the Database entity to its response DTO.
      */
-    private DatabaseResponse mapToResponse(Database db) {
+    private DatabaseResponse
+    mapToResponse(Database db) {
         return DatabaseResponse.builder()
                 .databaseId(db.getDatabaseId())
                 .name(db.getName())

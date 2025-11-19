@@ -102,7 +102,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://app.crudcloud.com", "https://api.cold-brew.crudzaso.com"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://app.crudcloud.com", "https://cold-brew.crudzaso.com"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
         configuration.setExposedHeaders(Arrays.asList("X-Total-Count"));

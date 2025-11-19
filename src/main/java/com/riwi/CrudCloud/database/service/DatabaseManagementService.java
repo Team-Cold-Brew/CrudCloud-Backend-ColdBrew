@@ -179,6 +179,7 @@ public class DatabaseManagementService {
         }
 
         Class.forName(driverClass);
+
         try (Connection conn = DriverManager.getConnection(jdbcUrl, info.adminUser(), info.adminPassword());
              Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
