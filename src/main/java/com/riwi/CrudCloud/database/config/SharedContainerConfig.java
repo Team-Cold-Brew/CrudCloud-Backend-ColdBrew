@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 import com.riwi.CrudCloud.common.models.DbType;
 
@@ -15,6 +16,7 @@ import lombok.Setter;
  * * Reads the configuration from application.properties (prefix shared.container).
  * * Contains the INTERNAL HOST (Docker Network Name) and administrator credentials.
  */
+@Component
 @ConfigurationProperties("shared.container")
 @Getter
 @Setter

@@ -1,8 +1,9 @@
 package com.riwi.CrudCloud.auth.config;
 
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+
+import lombok.Getter;
 
 /**
  * OAuth Provider Configuration
@@ -31,6 +32,9 @@ public class OAuthProviderConfig {
 
     @Value("${oauth.google.scopes:openid,profile,email}")
     private String googleScopes;
+
+    @Value("${oauth.google.redirect-uri:${oauth.redirect-uri:http://localhost:8080/auth/oauth/callback}}")
+    private String googleRedirectUri;
 
     // GitHub OAuth Configuration
     @Value("${oauth.github.client-id:}")
