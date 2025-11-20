@@ -110,7 +110,7 @@ public class SecurityConfig {
             "https://localhost:3000",
             "https://cold-brew.crudzaso.com",
             "https://app.crudcloud.com",
-            "https://cold-brew.crudzaso.com/login"
+            "https://cold-brew.crudzaso.com/login",
             "https://cold-brew.crudzaso.com/register"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
