@@ -70,8 +70,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 // OAuth endpoints
-                .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/login-urls").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/authorize/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/callback/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/oauth/login/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/oauth/callback/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/auth/oauth/login-urls").permitAll()
                 // Public endpoints - Plans (readable without auth)
                 .requestMatchers(HttpMethod.GET, "/api/v1/plans/**").permitAll()
                 // Public endpoints - Webhooks
@@ -102,15 +105,21 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://app.crudcloud.com", "https://cold-brew.crudzaso.com"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:3000",
+            "https://localhost:3000",
+            "https://cold-brew.crudzaso.com",
+            "https://app.crudcloud.com"
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
         configuration.setExposedHeaders(Arrays.asList("X-Total-Count"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+            source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
+    
