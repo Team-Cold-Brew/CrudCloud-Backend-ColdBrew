@@ -108,8 +108,8 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:3000",
             "https://localhost:3000",
-            "https://.*\\.crudzaso\\.com",
-            "https://.*\\.crudcloud\\.com"
+            "https://cold-brew.crudzaso.com",
+            "https://.*\\.crudzaso\\.com"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization"));
