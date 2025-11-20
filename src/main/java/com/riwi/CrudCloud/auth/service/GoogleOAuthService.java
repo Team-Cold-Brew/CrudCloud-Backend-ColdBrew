@@ -44,14 +44,16 @@ public class GoogleOAuthService implements OAuthService {
         String clientId = oauthConfig.getGoogleClientId();
         String authorizationUri = oauthConfig.getGoogleAuthorizationUri();
         String scopes = oauthConfig.getGoogleScopes();
+        String state = "google_" + System.currentTimeMillis(); // Include provider in state
         
         // Build authorization URL with proper URL encoding
         String authUrl = String.format(
-            "%s?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&access_type=offline",
+            "%s?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&access_type=offline&state=%s",
             authorizationUri,
             clientId,
             java.net.URLEncoder.encode(redirectUri, java.nio.charset.StandardCharsets.UTF_8),
-            java.net.URLEncoder.encode(scopes, java.nio.charset.StandardCharsets.UTF_8)
+            java.net.URLEncoder.encode(scopes, java.nio.charset.StandardCharsets.UTF_8),
+            java.net.URLEncoder.encode(state, java.nio.charset.StandardCharsets.UTF_8)
         );
         
         log.debug("Generated authorization URL for Google OAuth");
@@ -67,7 +69,7 @@ public class GoogleOAuthService implements OAuthService {
             requestBody.put("code", code);
             requestBody.put("client_id", oauthConfig.getGoogleClientId());
             requestBody.put("client_secret", oauthConfig.getGoogleClientSecret());
-            requestBody.put("redirect_uri", oauthConfig.getRedirectUri());
+            requestBody.put("redirect_uri", oauthConfig.getGoogleRedirectUri());
             requestBody.put("grant_type", "authorization_code");
 
             HttpHeaders headers = new HttpHeaders();

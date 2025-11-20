@@ -91,40 +91,30 @@ public class OAuthController {
     }
 
     /**
-     * OAuth login endpoint
-     * POST /api/auth/oauth/login/{provider}
+     * Handle OAuth callback from provider (Browser redirect with query params)
+     * GET /api/v1/auth/oauth/callback/{provider}?code=...&state=...
+     * 
+     * This endpoint receives the browser redirect from OAuth providers
+     * and exchanges the code for an access token
      *
      * @param provider the OAuth provider (google or github)
-     * @param request the callback request containing code and state
+     * @param code the authorization code from OAuth provider
+     * @param state the state parameter for CSRF protection
      * @return ResponseEntity with AuthResponse containing JWT token
      */
-    @PostMapping("/login/{provider}")
-    public ResponseEntity<?> oauthLogin(
+    @GetMapping("/callback/{provider}")
+    public ResponseEntity<?> handleOAuthCallbackGet(
             @PathVariable String provider,
-            @Valid @RequestBody OAuthCallbackRequest request) {
-        return handleOAuthCallback(provider, request);
-    }
+            @RequestParam String code,
+            @RequestParam(required = false) String state) {
 
-    /**
-     * Handle OAuth callback from provider
-     * POST /api/auth/oauth/callback/{provider}
-     *
-     * @param provider the OAuth provider (google or github)
-     * @param request the callback request containing code and state
-     * @return ResponseEntity with AuthResponse containing JWT token
-     */
-    @PostMapping("/callback/{provider}")
-    public ResponseEntity<?> handleOAuthCallback(
-            @PathVariable String provider,
-            @Valid @RequestBody OAuthCallbackRequest request) {
-
-        log.info("OAuth callback received: provider={}", provider);
+        log.info("OAuth callback received (GET): provider={}, code={}, state={}", provider, code, state);
 
         try {
             OAuthProvider oauthProvider = OAuthProvider.fromValue(provider);
 
             // Step 1: Exchange authorization code for access token
-            OAuth2TokenResponse tokenResponse = exchangeCodeForToken(request.getCode(), oauthProvider);
+            OAuth2TokenResponse tokenResponse = exchangeCodeForToken(code, oauthProvider);
 
             // Step 2: Fetch user profile from OAuth provider
             OAuthUserResponse oauthUser = fetchUserProfile(tokenResponse.getAccessToken(), oauthProvider);
@@ -133,6 +123,8 @@ public class OAuthController {
             AuthResponse authResponse = oauthUserProcessorService.processOAuthUser(oauthUser, oauthProvider);
 
             log.info("OAuth authentication successful: email={}, provider={}", oauthUser.getEmail(), provider);
+            
+            // Return the token in the response - frontend will handle storage
             return ResponseEntity.ok(authResponse);
 
         } catch (AccountLinkingException e) {
@@ -155,6 +147,75 @@ public class OAuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "error", "INVALID_PROVIDER",
                 "message", "Unsupported OAuth provider: " + provider
+            ));
+
+        } catch (Exception e) {
+            log.error("Unexpected error during OAuth authentication", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "INTERNAL_ERROR",
+                "message", "An unexpected error occurred during authentication"
+            ));
+        }
+    }
+
+    /**
+     * Handle OAuth callback from frontend (POST with JSON body)
+     * POST /api/v1/auth/oauth/callback
+     * 
+     * This endpoint receives OAuth callback from frontend after Google redirects
+     * Provider is determined from state parameter
+     *
+     * @param request the callback request containing code and state
+     * @return ResponseEntity with AuthResponse containing JWT token
+     */
+    @PostMapping("/callback")
+    public ResponseEntity<?> handleOAuthCallbackPost(
+            @Valid @RequestBody OAuthCallbackRequest request) {
+
+        log.info("OAuth callback received (POST): state={}", request.getState());
+
+        try {
+            // Extract provider from state (format: "provider_timestamp")
+            String provider = "google"; // Default to google
+            if (request.getState() != null && request.getState().contains("_")) {
+                provider = request.getState().split("_")[0];
+            }
+
+            OAuthProvider oauthProvider = OAuthProvider.fromValue(provider);
+
+            // Step 1: Exchange authorization code for access token
+            OAuth2TokenResponse tokenResponse = exchangeCodeForToken(request.getCode(), oauthProvider);
+
+            // Step 2: Fetch user profile from OAuth provider
+            OAuthUserResponse oauthUser = fetchUserProfile(tokenResponse.getAccessToken(), oauthProvider);
+
+            // Step 3: Process user (create new or login existing)
+            AuthResponse authResponse = oauthUserProcessorService.processOAuthUser(oauthUser, oauthProvider);
+
+            log.info("OAuth authentication successful: email={}, provider={}", oauthUser.getEmail(), provider);
+            
+            return ResponseEntity.ok(authResponse);
+
+        } catch (AccountLinkingException e) {
+            log.warn("Account linking required: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "error", "ACCOUNT_LINKING_REQUIRED",
+                "message", e.getMessage(),
+                "existingProvider", e.getExistingProvider()
+            ));
+
+        } catch (OAuthException e) {
+            log.error("OAuth error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", e.getErrorCode(),
+                "message", e.getErrorDescription()
+            ));
+
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid OAuth provider from state");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", "INVALID_PROVIDER",
+                "message", "Could not determine OAuth provider from state parameter"
             ));
 
         } catch (Exception e) {
